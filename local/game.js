@@ -20,9 +20,25 @@
   };
   window.__slap15QuestionIndexes = savedIndexes;
   let persistentQuestionIndex = 0;
-  let audioCtx = null;
-  let wrongN = 0;
-  let correctN = 0;
+  const S = () => window.Slap15Sounds || {};
+  const playCorrectSound = () => S().playCorrectSound && S().playCorrectSound();
+  const playWrongSound = () => S().playWrongSound && S().playWrongSound();
+  const playNopeSound = () => S().playNopeSound && S().playNopeSound();
+  const playMultipleChoiceSound = () => S().playMultipleChoiceSound && S().playMultipleChoiceSound();
+  const ringAlarm = () => S().ringAlarm && S().ringAlarm();
+  const playShowQuestionSound = () => S().playShowQuestionSound && S().playShowQuestionSound();
+  const playShowAnswerSound = () => S().playShowAnswerSound && S().playShowAnswerSound();
+  const playStartSound = () => S().playStartSound && S().playStartSound();
+  const playWinSound = () => S().playWinSound && S().playWinSound();
+  const playUndoSound = () => S().playUndoSound && S().playUndoSound();
+  const playNextReaderSound = () => S().playNextReaderSound && S().playNextReaderSound();
+  const playResetSound = () => S().playResetSound && S().playResetSound();
+  const playRulesSound = () => S().playRulesSound && S().playRulesSound();
+  const playErrorSound = () => S().playErrorSound && S().playErrorSound();
+  const playConfirmSound = () => S().playConfirmSound && S().playConfirmSound();
+  const playContinueSound = () => S().playContinueSound && S().playContinueSound();
+  const playAvatarSound = () => S().playAvatarSound && S().playAvatarSound();
+  const playUiTap = () => S().playUiTap && S().playUiTap();
 
   const players = root.querySelector("#players");
   const readerLabel = root.querySelector("#readerLabel");
@@ -90,120 +106,6 @@
     if (history.length > 100) history.shift();
   }
 
-  function audio() {
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (!AudioCtx) return null;
-    if (!audioCtx) audioCtx = new AudioCtx();
-    if (audioCtx.state === "suspended") audioCtx.resume();
-    return audioCtx;
-  }
-
-  function envGain(ctx, start, peak, dur) {
-    const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0.0001, start);
-    gain.gain.exponentialRampToValueAtTime(peak, start + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
-    return gain;
-  }
-
-  function tone(ctx, opts) {
-    const now = ctx.currentTime + (opts.at || 0);
-    const osc = ctx.createOscillator();
-    const amp = envGain(ctx, now, opts.gain || 0.12, opts.dur || 0.18);
-    osc.type = opts.type || "square";
-    osc.frequency.setValueAtTime(opts.freq, now);
-    if (opts.endFreq) {
-      osc.frequency.exponentialRampToValueAtTime(Math.max(opts.endFreq, 20), now + (opts.dur || 0.18));
-    }
-    osc.connect(amp);
-    amp.connect(ctx.destination);
-    osc.start(now);
-    osc.stop(now + (opts.dur || 0.18) + 0.02);
-  }
-
-  function noiseBurst(ctx, at, dur, gain, lpf) {
-    const frames = Math.max(1, Math.floor(ctx.sampleRate * dur));
-    const buffer = ctx.createBuffer(1, frames, ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < frames; i++) data[i] = Math.random() * 2 - 1;
-    const src = ctx.createBufferSource();
-    src.buffer = buffer;
-    const filter = ctx.createBiquadFilter();
-    filter.type = "lowpass";
-    filter.frequency.value = lpf || 1200;
-    const amp = envGain(ctx, ctx.currentTime + at, gain, dur);
-    src.connect(filter);
-    filter.connect(amp);
-    amp.connect(ctx.destination);
-    src.start(ctx.currentTime + at);
-  }
-
-  function honk(ctx) {
-    tone(ctx, { type: "sawtooth", freq: 180, endFreq: 140, dur: 0.22, gain: 0.16 });
-    noiseBurst(ctx, 0, 0.12, 0.08, 700);
-  }
-  function duck(ctx) {
-    tone(ctx, { type: "square", freq: 420, endFreq: 180, dur: 0.14, gain: 0.14 });
-    tone(ctx, { type: "square", freq: 380, endFreq: 140, at: 0.12, dur: 0.16, gain: 0.12 });
-  }
-  function sadTrombone(ctx) {
-    [349, 330, 294, 220].forEach((freq, i) => {
-      tone(ctx, { type: "sawtooth", freq, endFreq: freq - 30, at: i * 0.22, dur: 0.28, gain: 0.12 });
-    });
-  }
-  function kazooFanfare(ctx) {
-    [523, 659, 784, 1046].forEach((freq, i) => {
-      tone(ctx, { type: "square", freq, at: i * 0.09, dur: 0.16, gain: 0.11 });
-    });
-  }
-  function springBoing(ctx) {
-    tone(ctx, { type: "sine", freq: 140, endFreq: 720, dur: 0.22, gain: 0.16 });
-    tone(ctx, { type: "triangle", freq: 720, endFreq: 420, at: 0.18, dur: 0.22, gain: 0.1 });
-  }
-  function clownHorn(ctx) {
-    honk(ctx);
-    tone(ctx, { type: "square", freq: 240, at: 0.12, dur: 0.18, gain: 0.12 });
-  }
-  function wahWah(ctx) {
-    tone(ctx, { type: "sawtooth", freq: 400, endFreq: 180, dur: 0.35, gain: 0.13 });
-    tone(ctx, { type: "sawtooth", freq: 300, endFreq: 140, at: 0.28, dur: 0.4, gain: 0.11 });
-  }
-
-  function playCorrectSound() {
-    try {
-      const ctx = audio();
-      if (!ctx) return;
-      [kazooFanfare, springBoing][correctN++ % 2](ctx);
-    } catch {
-      /* optional */
-    }
-  }
-  function playWrongSound() {
-    try {
-      const ctx = audio();
-      if (!ctx) return;
-      [honk, duck, sadTrombone][wrongN++ % 3](ctx);
-    } catch {
-      /* optional */
-    }
-  }
-  function ringAlarm() {
-    try {
-      const ctx = audio();
-      if (ctx) clownHorn(ctx);
-    } catch {
-      /* optional */
-    }
-  }
-  function playMultipleChoiceSound() {
-    try {
-      const ctx = audio();
-      if (ctx) wahWah(ctx);
-    } catch {
-      /* optional */
-    }
-  }
-
   function hashSeed(text) {
     let h = 2166136261;
     for (let i = 0; i < text.length; i++) {
@@ -261,6 +163,7 @@
         AVATARS[i % AVATARS.length] +
         "</span><span>Tap to change</span>";
       pick.addEventListener("click", () => {
+        playAvatarSound();
         const current = AVATARS.indexOf(pick.querySelector(".avatar-emoji").textContent);
         const next = (current + 1) % AVATARS.length;
         pick.querySelector(".avatar-emoji").textContent = AVATARS[next];
@@ -407,6 +310,7 @@
     }
     const result = roundResult;
     hideRoundResult();
+    if (!(result.kind === "wrong" && result.allStumped)) playContinueSound();
     if (result.kind === "correct") {
       advanceQuestion();
       status.textContent = names[state.reader] + " reads. Press Show Question.";
@@ -437,6 +341,7 @@
       avatarBtn.className = "avatar-btn";
       avatarBtn.innerHTML = '<span class="avatar-emoji">' + (avatars[i] || AVATARS[i % AVATARS.length]) + "</span>";
       avatarBtn.addEventListener("click", () => {
+        playAvatarSound();
         const current = AVATARS.indexOf(avatars[i]);
         avatars[i] = AVATARS[(current + 1) % AVATARS.length];
         render();
@@ -482,11 +387,13 @@
   function correct(i) {
     if (i === state.reader || state.winner || roundResult) return;
     snapshot();
-    playCorrectSound();
     state.scores[i] += 1;
     state.answerVisible = true;
     const won = state.scores[i] >= winTarget;
-    if (won) state.winner = { index: i };
+    if (won) {
+      state.winner = { index: i };
+      playWinSound();
+    } else playCorrectSound();
     status.textContent = names[i] + " answered correctly: +1 point.";
     const q = currentQuestion();
     roundResult = {
@@ -559,7 +466,7 @@
       render();
       return;
     }
-    playWrongSound();
+    playNopeSound();
     state.eliminatedChoices.push(index);
     status.textContent = "Nope. Cross that one out and try another.";
     roundResult = {
@@ -593,6 +500,7 @@
       confirmOverlay.hidden = false;
       return;
     }
+    playShowQuestionSound();
     state.questionVisible = true;
     state.answerVisible = false;
     state.multipleChoice = false;
@@ -601,12 +509,14 @@
     renderQuestion();
   });
   showAnswer.addEventListener("click", () => {
-    if (!currentQuestion() || !state.questionVisible) return;
+    if (!currentQuestion() || !state.questionVisible || roundResult) return;
+    playShowAnswerSound();
     state.answerVisible = true;
     renderQuestion();
   });
   nobodyKnows.addEventListener("click", enableMultipleChoice);
   root.querySelector("#confirmYes").addEventListener("click", () => {
+    playConfirmSound();
     confirmOverlay.hidden = true;
     state.questionVisible = true;
     state.answerVisible = false;
@@ -616,20 +526,28 @@
     renderQuestion();
   });
   root.querySelector("#confirmNo").addEventListener("click", () => {
+    playUiTap();
     confirmOverlay.hidden = true;
   });
   showRules.addEventListener("click", () => {
+    playRulesSound();
     rulesPanel.hidden = false;
     showRules.textContent = "Rules Open";
   });
   root.querySelector("#closeRules").addEventListener("click", () => {
+    playRulesSound();
     rulesPanel.hidden = true;
     showRules.textContent = "Show Rules";
   });
-  playerCount.addEventListener("change", buildNameFields);
+  levelSelect.addEventListener("change", playUiTap);
+  playerCount.addEventListener("change", () => {
+    playUiTap();
+    buildNameFields();
+  });
   startGame.addEventListener("click", async () => {
     const level = levelSelect.value;
     if (!level) {
+      playErrorSound();
       status.textContent = "Choose a question level first.";
       levelSelect.focus();
       return;
@@ -659,9 +577,11 @@
       setupPanel.hidden = true;
       gamePanel.hidden = false;
       gameSubtitle.textContent = "First to " + winTarget + " net points wins";
+      playStartSound();
       status.textContent = names[0] + " reads first.";
       render();
     } catch (err) {
+      playErrorSound();
       status.textContent = err.message || "Could not load questions.";
     } finally {
       startGame.disabled = false;
@@ -672,6 +592,7 @@
   }
   root.querySelector("#nextReader").addEventListener("click", () => {
     if (state.winner || !activeLevel || !names.length || roundResult) return;
+    playNextReaderSound();
     snapshot();
     advanceQuestion();
     state.reader = (state.reader + 1) % names.length;
@@ -680,6 +601,7 @@
   });
   root.querySelector("#undo").addEventListener("click", () => {
     if (!history.length) return;
+    playUndoSound();
     state = Object.assign(emptyState(names.length), JSON.parse(history.pop()));
     confirmOverlay.hidden = true;
     hideRoundResult();
@@ -688,6 +610,7 @@
     render();
   });
   root.querySelector("#reset").addEventListener("click", () => {
+    playResetSound();
     history = [];
     state = emptyState(0);
     confirmOverlay.hidden = true;

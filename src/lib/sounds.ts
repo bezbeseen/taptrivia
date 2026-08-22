@@ -1,6 +1,17 @@
 let ctx: AudioContext | null = null;
-let wrongN = 0;
-let correctN = 0;
+const n = {
+  correct: 0,
+  wrong: 0,
+  nope: 0,
+  tap: 0,
+  avatar: 0,
+  question: 0,
+  answer: 0,
+  continue: 0,
+  mc: 0,
+};
+
+type Fx = (ac: AudioContext) => void;
 
 function audio(): AudioContext | null {
   if (typeof window === "undefined") return null;
@@ -13,16 +24,32 @@ function audio(): AudioContext | null {
   return ctx;
 }
 
-function envGain(ctx: AudioContext, start: number, peak: number, dur: number) {
-  const gain = ctx.createGain();
+function play(fn: Fx) {
+  try {
+    const ac = audio();
+    if (!ac) return;
+    fn(ac);
+  } catch {
+    /* Sounds are optional. */
+  }
+}
+
+function cycle(list: Fx[], slot: keyof typeof n) {
+  const fn = list[n[slot] % list.length];
+  n[slot] += 1;
+  if (fn) play(fn);
+}
+
+function envGain(ac: AudioContext, start: number, peak: number, dur: number) {
+  const gain = ac.createGain();
   gain.gain.setValueAtTime(0.0001, start);
-  gain.gain.exponentialRampToValueAtTime(peak, start + 0.02);
+  gain.gain.exponentialRampToValueAtTime(peak, start + 0.012);
   gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
   return gain;
 }
 
 function tone(
-  ctx: AudioContext,
+  ac: AudioContext,
   {
     type = "square",
     freq,
@@ -39,151 +66,459 @@ function tone(
     gain?: number;
   }
 ) {
-  const now = ctx.currentTime + at;
-  const osc = ctx.createOscillator();
-  const amp = envGain(ctx, now, gain, dur);
+  const now = ac.currentTime + at;
+  const osc = ac.createOscillator();
+  const amp = envGain(ac, now, gain, dur);
   osc.type = type;
   osc.frequency.setValueAtTime(freq, now);
   if (endFreq) osc.frequency.exponentialRampToValueAtTime(Math.max(endFreq, 20), now + dur);
   osc.connect(amp);
-  amp.connect(ctx.destination);
+  amp.connect(ac.destination);
   osc.start(now);
   osc.stop(now + dur + 0.02);
 }
 
-function noiseBurst(ctx: AudioContext, at: number, dur: number, gain: number, lpf = 1200) {
-  const frames = Math.max(1, Math.floor(ctx.sampleRate * dur));
-  const buffer = ctx.createBuffer(1, frames, ctx.sampleRate);
+function noiseBurst(
+  ac: AudioContext,
+  at: number,
+  dur: number,
+  gain: number,
+  freq = 1200,
+  type: BiquadFilterType = "lowpass"
+) {
+  const frames = Math.max(1, Math.floor(ac.sampleRate * dur));
+  const buffer = ac.createBuffer(1, frames, ac.sampleRate);
   const data = buffer.getChannelData(0);
   for (let i = 0; i < frames; i++) data[i] = Math.random() * 2 - 1;
-  const src = ctx.createBufferSource();
+  const src = ac.createBufferSource();
   src.buffer = buffer;
-  const filter = ctx.createBiquadFilter();
-  filter.type = "lowpass";
-  filter.frequency.value = lpf;
-  const amp = envGain(ctx, ctx.currentTime + at, gain, dur);
+  const filter = ac.createBiquadFilter();
+  filter.type = type;
+  filter.frequency.value = freq;
+  filter.Q.value = type === "bandpass" ? 6 : 0.7;
+  const amp = envGain(ac, ac.currentTime + at, gain, dur);
   src.connect(filter);
   filter.connect(amp);
-  amp.connect(ctx.destination);
-  src.start(ctx.currentTime + at);
+  amp.connect(ac.destination);
+  src.start(ac.currentTime + at);
 }
 
-function honk(ctx: AudioContext) {
-  tone(ctx, { type: "sawtooth", freq: 180, endFreq: 140, dur: 0.22, gain: 0.16 });
-  tone(ctx, { type: "square", freq: 360, endFreq: 280, dur: 0.22, gain: 0.08 });
-  noiseBurst(ctx, 0, 0.12, 0.08, 700);
+function chord(ac: AudioContext, freqs: number[], at: number, dur: number, gain: number, type: OscillatorType = "square") {
+  freqs.forEach((freq) => tone(ac, { type, freq, at, dur, gain: gain / freqs.length }));
 }
 
-function duck(ctx: AudioContext) {
-  tone(ctx, { type: "square", freq: 420, endFreq: 180, dur: 0.14, gain: 0.14 });
-  tone(ctx, { type: "square", freq: 380, endFreq: 140, at: 0.12, dur: 0.16, gain: 0.12 });
+function honk(ac: AudioContext) {
+  tone(ac, { type: "sawtooth", freq: 180, endFreq: 140, dur: 0.22, gain: 0.16 });
+  tone(ac, { type: "square", freq: 360, endFreq: 280, dur: 0.22, gain: 0.08 });
+  noiseBurst(ac, 0, 0.12, 0.08, 700);
 }
 
-function sadTrombone(ctx: AudioContext) {
-  const notes = [349, 330, 294, 220];
-  notes.forEach((freq, i) => {
-    tone(ctx, { type: "sawtooth", freq, endFreq: freq - 30, at: i * 0.22, dur: 0.28, gain: 0.12 });
+function duck(ac: AudioContext) {
+  tone(ac, { type: "square", freq: 420, endFreq: 180, dur: 0.14, gain: 0.14 });
+  tone(ac, { type: "square", freq: 380, endFreq: 140, at: 0.12, dur: 0.16, gain: 0.12 });
+}
+
+function sadTrombone(ac: AudioContext) {
+  [349, 330, 294, 220].forEach((freq, i) => {
+    tone(ac, { type: "sawtooth", freq, endFreq: freq - 30, at: i * 0.22, dur: 0.28, gain: 0.12 });
   });
 }
 
-function recordScratch(ctx: AudioContext) {
-  noiseBurst(ctx, 0, 0.18, 0.18, 2400);
-  tone(ctx, { type: "sawtooth", freq: 900, endFreq: 90, dur: 0.22, gain: 0.1 });
+function recordScratch(ac: AudioContext) {
+  noiseBurst(ac, 0, 0.18, 0.18, 2400);
+  tone(ac, { type: "sawtooth", freq: 900, endFreq: 90, dur: 0.22, gain: 0.1 });
 }
 
-function splat(ctx: AudioContext) {
-  noiseBurst(ctx, 0, 0.2, 0.2, 500);
-  tone(ctx, { type: "triangle", freq: 90, endFreq: 40, dur: 0.28, gain: 0.18 });
+function splat(ac: AudioContext) {
+  noiseBurst(ac, 0, 0.2, 0.2, 500);
+  tone(ac, { type: "triangle", freq: 90, endFreq: 40, dur: 0.28, gain: 0.18 });
 }
 
-function kazooFanfare(ctx: AudioContext) {
-  const notes = [523, 659, 784, 1046];
-  notes.forEach((freq, i) => {
-    tone(ctx, { type: "square", freq, at: i * 0.09, dur: 0.16, gain: 0.11 });
-    tone(ctx, { type: "sawtooth", freq: freq * 1.01, at: i * 0.09, dur: 0.16, gain: 0.04 });
+function kazooFanfare(ac: AudioContext) {
+  [523, 659, 784, 1046].forEach((freq, i) => {
+    tone(ac, { type: "square", freq, at: i * 0.09, dur: 0.16, gain: 0.11 });
+    tone(ac, { type: "sawtooth", freq: freq * 1.01, at: i * 0.09, dur: 0.16, gain: 0.04 });
   });
-  tone(ctx, { type: "triangle", freq: 1318, at: 0.38, dur: 0.28, gain: 0.1 });
+  tone(ac, { type: "triangle", freq: 1318, at: 0.38, dur: 0.28, gain: 0.1 });
 }
 
-function springBoing(ctx: AudioContext) {
-  tone(ctx, { type: "sine", freq: 140, endFreq: 720, dur: 0.22, gain: 0.16 });
-  tone(ctx, { type: "triangle", freq: 720, endFreq: 420, at: 0.18, dur: 0.22, gain: 0.1 });
-  tone(ctx, { type: "square", freq: 880, at: 0.32, dur: 0.12, gain: 0.07 });
+function springBoing(ac: AudioContext) {
+  tone(ac, { type: "sine", freq: 140, endFreq: 720, dur: 0.22, gain: 0.16 });
+  tone(ac, { type: "triangle", freq: 720, endFreq: 420, at: 0.18, dur: 0.22, gain: 0.1 });
+  tone(ac, { type: "square", freq: 880, at: 0.32, dur: 0.12, gain: 0.07 });
 }
 
-function coinChoir(ctx: AudioContext) {
+function coinChoir(ac: AudioContext) {
   [0, 0.08, 0.16, 0.28].forEach((at, i) => {
-    tone(ctx, { type: "square", freq: 880 + i * 120, at, dur: 0.12, gain: 0.09 });
+    tone(ac, { type: "square", freq: 880 + i * 120, at, dur: 0.12, gain: 0.09 });
   });
-  tone(ctx, { type: "triangle", freq: 1320, at: 0.22, dur: 0.35, gain: 0.08 });
+  tone(ac, { type: "triangle", freq: 1320, at: 0.22, dur: 0.35, gain: 0.08 });
 }
 
-function slideWhistleUp(ctx: AudioContext) {
-  tone(ctx, { type: "sine", freq: 220, endFreq: 980, dur: 0.35, gain: 0.14 });
-  tone(ctx, { type: "triangle", freq: 330, endFreq: 1200, dur: 0.35, gain: 0.05 });
+function slideWhistleUp(ac: AudioContext) {
+  tone(ac, { type: "sine", freq: 220, endFreq: 980, dur: 0.35, gain: 0.14 });
+  tone(ac, { type: "triangle", freq: 330, endFreq: 1200, dur: 0.35, gain: 0.05 });
 }
 
-function clownHorn(ctx: AudioContext) {
-  honk(ctx);
-  tone(ctx, { type: "square", freq: 240, at: 0.12, dur: 0.18, gain: 0.12 });
-  tone(ctx, { type: "square", freq: 190, at: 0.22, dur: 0.22, gain: 0.12 });
+function slideWhistleDown(ac: AudioContext) {
+  tone(ac, { type: "sine", freq: 980, endFreq: 180, dur: 0.38, gain: 0.14 });
+  tone(ac, { type: "triangle", freq: 720, endFreq: 140, dur: 0.38, gain: 0.05 });
 }
 
-function wahWah(ctx: AudioContext) {
-  tone(ctx, { type: "sawtooth", freq: 400, endFreq: 180, dur: 0.35, gain: 0.13 });
-  tone(ctx, { type: "sawtooth", freq: 300, endFreq: 140, at: 0.28, dur: 0.4, gain: 0.11 });
+function clownHorn(ac: AudioContext) {
+  honk(ac);
+  tone(ac, { type: "square", freq: 240, at: 0.12, dur: 0.18, gain: 0.12 });
+  tone(ac, { type: "square", freq: 190, at: 0.22, dur: 0.22, gain: 0.12 });
 }
+
+function wahWah(ac: AudioContext) {
+  tone(ac, { type: "sawtooth", freq: 400, endFreq: 180, dur: 0.35, gain: 0.13 });
+  tone(ac, { type: "sawtooth", freq: 300, endFreq: 140, at: 0.28, dur: 0.4, gain: 0.11 });
+}
+
+function raspberry(ac: AudioContext) {
+  noiseBurst(ac, 0, 0.32, 0.16, 420);
+  tone(ac, { type: "sawtooth", freq: 70, endFreq: 55, dur: 0.32, gain: 0.14 });
+  tone(ac, { type: "square", freq: 90, endFreq: 60, dur: 0.28, gain: 0.08 });
+}
+
+function goat(ac: AudioContext) {
+  tone(ac, { type: "sawtooth", freq: 320, endFreq: 420, dur: 0.12, gain: 0.12 });
+  tone(ac, { type: "sawtooth", freq: 400, endFreq: 260, at: 0.1, dur: 0.16, gain: 0.12 });
+  tone(ac, { type: "square", freq: 280, endFreq: 180, at: 0.22, dur: 0.18, gain: 0.1 });
+}
+
+function catYowl(ac: AudioContext) {
+  tone(ac, { type: "sawtooth", freq: 820, endFreq: 240, dur: 0.42, gain: 0.11 });
+  tone(ac, { type: "triangle", freq: 940, endFreq: 200, dur: 0.42, gain: 0.06 });
+}
+
+function partyHorn(ac: AudioContext) {
+  tone(ac, { type: "sawtooth", freq: 400, endFreq: 880, dur: 0.45, gain: 0.1 });
+  noiseBurst(ac, 0, 0.45, 0.1, 1800, "bandpass");
+  [0.08, 0.18, 0.28, 0.38].forEach((at) => {
+    tone(ac, { type: "square", freq: 700 + at * 400, at, dur: 0.08, gain: 0.06 });
+  });
+}
+
+function baDumTss(ac: AudioContext) {
+  tone(ac, { type: "sine", freq: 160, endFreq: 70, dur: 0.16, gain: 0.2 });
+  tone(ac, { type: "sine", freq: 220, endFreq: 90, at: 0.16, dur: 0.16, gain: 0.18 });
+  noiseBurst(ac, 0.34, 0.28, 0.16, 5000, "highpass");
+}
+
+function airhorn(ac: AudioContext) {
+  chord(ac, [174, 220, 261], 0, 0.22, 0.22, "sawtooth");
+  chord(ac, [174, 220, 261], 0.18, 0.38, 0.2, "sawtooth");
+}
+
+function yodel(ac: AudioContext) {
+  [523, 784, 523, 880, 659].forEach((freq, i) => {
+    tone(ac, { type: "triangle", freq, at: i * 0.09, dur: 0.12, gain: 0.12 });
+  });
+}
+
+function cartoonZip(ac: AudioContext) {
+  tone(ac, { type: "square", freq: 120, endFreq: 1400, dur: 0.22, gain: 0.1 });
+  tone(ac, { type: "triangle", freq: 1400, endFreq: 400, at: 0.2, dur: 0.16, gain: 0.08 });
+}
+
+function circusSting(ac: AudioContext) {
+  chord(ac, [392, 494, 587], 0, 0.16, 0.16);
+  chord(ac, [349, 440, 523], 0.14, 0.16, 0.16);
+  chord(ac, [523, 659, 784], 0.3, 0.32, 0.18);
+}
+
+function cashRegister(ac: AudioContext) {
+  noiseBurst(ac, 0, 0.06, 0.1, 3000);
+  tone(ac, { type: "square", freq: 1200, at: 0.05, dur: 0.08, gain: 0.08 });
+  tone(ac, { type: "square", freq: 1600, at: 0.12, dur: 0.1, gain: 0.08 });
+  tone(ac, { type: "triangle", freq: 2000, at: 0.2, dur: 0.22, gain: 0.07 });
+}
+
+function bubblePop(ac: AudioContext) {
+  [0, 0.07, 0.14, 0.24].forEach((at, i) => {
+    tone(ac, { type: "sine", freq: 420 + i * 90, endFreq: 90, at, dur: 0.12, gain: 0.1 });
+  });
+}
+
+function powerUp(ac: AudioContext) {
+  [262, 330, 392, 523, 659, 784].forEach((freq, i) => {
+    tone(ac, { type: "square", freq, at: i * 0.05, dur: 0.1, gain: 0.08 });
+  });
+}
+
+function buzzer(ac: AudioContext) {
+  tone(ac, { type: "square", freq: 110, dur: 0.28, gain: 0.14 });
+  tone(ac, { type: "square", freq: 146, dur: 0.28, gain: 0.1 });
+  noiseBurst(ac, 0, 0.28, 0.06, 800);
+}
+
+function glassBreak(ac: AudioContext) {
+  noiseBurst(ac, 0, 0.12, 0.18, 4000, "highpass");
+  [1800, 2400, 3100, 1500].forEach((freq, i) => {
+    tone(ac, { type: "triangle", freq, endFreq: freq * 0.4, at: i * 0.03, dur: 0.18, gain: 0.06 });
+  });
+}
+
+function wilhelmLite(ac: AudioContext) {
+  noiseBurst(ac, 0, 0.35, 0.14, 1600, "bandpass");
+  tone(ac, { type: "sawtooth", freq: 700, endFreq: 180, dur: 0.4, gain: 0.12 });
+  tone(ac, { type: "square", freq: 900, endFreq: 140, dur: 0.38, gain: 0.06 });
+}
+
+function failPiano(ac: AudioContext) {
+  [392, 349, 311, 247, 196].forEach((freq, i) => {
+    tone(ac, { type: "triangle", freq, at: i * 0.11, dur: 0.2, gain: 0.11 });
+  });
+}
+
+function bikeHorn(ac: AudioContext) {
+  tone(ac, { type: "square", freq: 430, dur: 0.12, gain: 0.14 });
+  tone(ac, { type: "square", freq: 340, at: 0.14, dur: 0.22, gain: 0.14 });
+}
+
+function cuckoo(ac: AudioContext) {
+  tone(ac, { type: "triangle", freq: 659, dur: 0.14, gain: 0.12 });
+  tone(ac, { type: "triangle", freq: 523, at: 0.16, dur: 0.18, gain: 0.12 });
+}
+
+function hiccup(ac: AudioContext) {
+  tone(ac, { type: "sine", freq: 240, endFreq: 420, dur: 0.08, gain: 0.14 });
+  tone(ac, { type: "sine", freq: 200, endFreq: 360, at: 0.16, dur: 0.09, gain: 0.12 });
+}
+
+function sneeze(ac: AudioContext) {
+  noiseBurst(ac, 0, 0.08, 0.08, 900);
+  noiseBurst(ac, 0.12, 0.18, 0.2, 2200);
+  tone(ac, { type: "triangle", freq: 180, endFreq: 70, at: 0.12, dur: 0.2, gain: 0.1 });
+}
+
+function whipCrack(ac: AudioContext) {
+  tone(ac, { type: "sawtooth", freq: 1400, endFreq: 180, dur: 0.08, gain: 0.1 });
+  noiseBurst(ac, 0.05, 0.1, 0.18, 5000, "highpass");
+}
+
+function cowbell(ac: AudioContext) {
+  tone(ac, { type: "square", freq: 587, dur: 0.12, gain: 0.08 });
+  tone(ac, { type: "square", freq: 845, dur: 0.1, gain: 0.06 });
+  noiseBurst(ac, 0, 0.08, 0.08, 2500);
+}
+
+function xylophone(ac: AudioContext) {
+  [523, 659, 784, 1046].forEach((freq, i) => {
+    tone(ac, { type: "triangle", freq, at: i * 0.07, dur: 0.18, gain: 0.11 });
+  });
+}
+
+function laserPew(ac: AudioContext) {
+  tone(ac, { type: "sawtooth", freq: 980, endFreq: 120, dur: 0.18, gain: 0.1 });
+  tone(ac, { type: "square", freq: 720, endFreq: 90, dur: 0.16, gain: 0.05 });
+}
+
+function whoosh(ac: AudioContext) {
+  noiseBurst(ac, 0, 0.28, 0.14, 800, "bandpass");
+  tone(ac, { type: "sine", freq: 200, endFreq: 640, dur: 0.28, gain: 0.06 });
+}
+
+function rewind(ac: AudioContext) {
+  [880, 740, 620, 520, 430, 360, 280].forEach((freq, i) => {
+    tone(ac, { type: "square", freq, at: i * 0.04, dur: 0.06, gain: 0.07 });
+  });
+}
+
+function pageFlip(ac: AudioContext) {
+  noiseBurst(ac, 0, 0.08, 0.1, 1800, "highpass");
+  noiseBurst(ac, 0.06, 0.1, 0.08, 900);
+}
+
+function drumroll(ac: AudioContext) {
+  for (let i = 0; i < 10; i++) {
+    noiseBurst(ac, i * 0.045, 0.04, 0.08 + i * 0.006, 1800);
+  }
+  chord(ac, [392, 494, 587], 0.48, 0.35, 0.18);
+}
+
+function taDa(ac: AudioContext) {
+  chord(ac, [392, 494, 587], 0, 0.18, 0.16);
+  chord(ac, [523, 659, 784, 1046], 0.2, 0.45, 0.18);
+}
+
+function gameOver(ac: AudioContext) {
+  chord(ac, [196, 247, 294], 0, 0.22, 0.14, "sawtooth");
+  chord(ac, [175, 220, 262], 0.2, 0.22, 0.14, "sawtooth");
+  chord(ac, [147, 185, 220], 0.42, 0.5, 0.16, "sawtooth");
+}
+
+function pop(ac: AudioContext) {
+  tone(ac, { type: "sine", freq: 420, endFreq: 140, dur: 0.09, gain: 0.12 });
+  noiseBurst(ac, 0, 0.05, 0.06, 1800);
+}
+
+function blip(ac: AudioContext) {
+  tone(ac, { type: "square", freq: 660, dur: 0.06, gain: 0.07 });
+  tone(ac, { type: "square", freq: 880, at: 0.05, dur: 0.06, gain: 0.05 });
+}
+
+function boing(ac: AudioContext) {
+  tone(ac, { type: "sine", freq: 180, endFreq: 520, dur: 0.14, gain: 0.12 });
+  tone(ac, { type: "triangle", freq: 520, endFreq: 260, at: 0.12, dur: 0.14, gain: 0.08 });
+}
+
+function sparkle(ac: AudioContext) {
+  [1200, 1500, 1800, 2100].forEach((freq, i) => {
+    tone(ac, { type: "sine", freq, at: i * 0.05, dur: 0.12, gain: 0.06 });
+  });
+}
+
+function klaxon(ac: AudioContext) {
+  tone(ac, { type: "sawtooth", freq: 440, endFreq: 330, dur: 0.16, gain: 0.12 });
+  tone(ac, { type: "sawtooth", freq: 330, endFreq: 440, at: 0.16, dur: 0.16, gain: 0.12 });
+  tone(ac, { type: "sawtooth", freq: 440, endFreq: 330, at: 0.32, dur: 0.18, gain: 0.12 });
+}
+
+function ukulele(ac: AudioContext) {
+  [392, 494, 587, 740].forEach((freq, i) => {
+    tone(ac, { type: "triangle", freq, at: i * 0.03, dur: 0.28, gain: 0.07 });
+  });
+}
+
+function thereminWoo(ac: AudioContext) {
+  tone(ac, { type: "sine", freq: 300, endFreq: 720, dur: 0.28, gain: 0.1 });
+  tone(ac, { type: "sine", freq: 720, endFreq: 240, at: 0.26, dur: 0.32, gain: 0.1 });
+}
+
+function bonk(ac: AudioContext) {
+  tone(ac, { type: "triangle", freq: 140, endFreq: 70, dur: 0.16, gain: 0.18 });
+  noiseBurst(ac, 0, 0.05, 0.1, 600);
+}
+
+function rimshot(ac: AudioContext) {
+  noiseBurst(ac, 0, 0.05, 0.16, 4000, "highpass");
+  tone(ac, { type: "sine", freq: 180, endFreq: 80, dur: 0.12, gain: 0.16 });
+}
+
+const CORRECT: Fx[] = [
+  kazooFanfare,
+  springBoing,
+  coinChoir,
+  slideWhistleUp,
+  partyHorn,
+  baDumTss,
+  yodel,
+  cartoonZip,
+  circusSting,
+  cashRegister,
+  bubblePop,
+  powerUp,
+  airhorn,
+  xylophone,
+  ukulele,
+  sparkle,
+  taDa,
+];
+
+const WRONG: Fx[] = [
+  honk,
+  duck,
+  sadTrombone,
+  recordScratch,
+  splat,
+  raspberry,
+  goat,
+  catYowl,
+  buzzer,
+  glassBreak,
+  wilhelmLite,
+  failPiano,
+  bikeHorn,
+  slideWhistleDown,
+  sneeze,
+  bonk,
+  klaxon,
+];
+
+const NOPE: Fx[] = [duck, bikeHorn, bonk, hiccup, cuckoo, whipCrack, rimshot];
+const TAPS: Fx[] = [pop, blip, cowbell, boing, laserPew];
+const AVATARS: Fx[] = [boing, duck, hiccup, sparkle, goat, bubblePop, cartoonZip];
+const QUESTIONS: Fx[] = [whoosh, whipCrack, cartoonZip, drumroll, rimshot];
+const ANSWERS: Fx[] = [cuckoo, sparkle, xylophone, cashRegister, ukulele];
+const CONTINUES: Fx[] = [pop, blip, whoosh, boing, powerUp];
+const MCS: Fx[] = [wahWah, thereminWoo, klaxon, partyHorn, slideWhistleDown];
 
 export function ringAlarm() {
-  try {
-    const ac = audio();
-    if (!ac) return;
-    clownHorn(ac);
-  } catch {
-    /* optional */
-  }
+  play(clownHorn);
 }
 
 export function playCorrectSound() {
-  try {
-    const ac = audio();
-    if (!ac) return;
-    const variants = [kazooFanfare, springBoing, coinChoir, slideWhistleUp];
-    variants[correctN % variants.length]!(ac);
-    correctN += 1;
-  } catch {
-    /* optional */
-  }
+  cycle(CORRECT, "correct");
 }
 
 export function playWrongSound() {
-  try {
-    const ac = audio();
-    if (!ac) return;
-    const variants = [honk, duck, sadTrombone, recordScratch, splat];
-    variants[wrongN % variants.length]!(ac);
-    wrongN += 1;
-  } catch {
-    /* optional */
-  }
-}
-
-export function playMultipleChoiceSound() {
-  try {
-    const ac = audio();
-    if (!ac) return;
-    wahWah(ac);
-  } catch {
-    /* optional */
-  }
+  cycle(WRONG, "wrong");
 }
 
 export function playNopeSound() {
-  try {
-    const ac = audio();
-    if (!ac) return;
-    duck(ac);
-  } catch {
-    /* optional */
-  }
+  cycle(NOPE, "nope");
+}
+
+export function playMultipleChoiceSound() {
+  cycle(MCS, "mc");
+}
+
+export function playUiTap() {
+  cycle(TAPS, "tap");
+}
+
+export function playAvatarSound() {
+  cycle(AVATARS, "avatar");
+}
+
+export function playShowQuestionSound() {
+  cycle(QUESTIONS, "question");
+}
+
+export function playShowAnswerSound() {
+  cycle(ANSWERS, "answer");
+}
+
+export function playContinueSound() {
+  cycle(CONTINUES, "continue");
+}
+
+export function playStartSound() {
+  play(drumroll);
+}
+
+export function playWinSound() {
+  play(taDa);
+  play((ac) => {
+    partyHorn(ac);
+    coinChoir(ac);
+  });
+}
+
+export function playUndoSound() {
+  play(rewind);
+}
+
+export function playNextReaderSound() {
+  play(whoosh);
+  play(ukulele);
+}
+
+export function playResetSound() {
+  play(gameOver);
+}
+
+export function playRulesSound() {
+  play(pageFlip);
+}
+
+export function playErrorSound() {
+  play(buzzer);
+}
+
+export function playConfirmSound() {
+  play(whipCrack);
 }

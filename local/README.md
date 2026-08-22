@@ -20,6 +20,7 @@ Then open the URL it prints and choose `slap-15.html` or `preview.html`.
 | --- | --- |
 | `slap-15.html` | Full game in one file. Use this. |
 | `preview.html` | Original loader. Needs a local server. |
+| `sounds.js` | Cartoon sound pack for every tap. |
 | `app.html` | Original shell and scoring. |
 | `questions-data-*.js` | Compressed question bank. |
 | `questions-loader.js` | Unpacks the bank in the browser. |

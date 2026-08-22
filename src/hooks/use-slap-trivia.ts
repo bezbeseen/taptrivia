@@ -16,9 +16,22 @@ import {
   type TriviaQuestion,
 } from "@/lib/questions";
 import {
+  playAvatarSound,
+  playConfirmSound,
+  playContinueSound,
   playCorrectSound,
+  playErrorSound,
   playMultipleChoiceSound,
+  playNextReaderSound,
   playNopeSound,
+  playResetSound,
+  playRulesSound,
+  playShowAnswerSound,
+  playShowQuestionSound,
+  playStartSound,
+  playUndoSound,
+  playUiTap,
+  playWinSound,
   playWrongSound,
   ringAlarm,
 } from "@/lib/sounds";
@@ -67,7 +80,7 @@ function emptyState(count = 0): GameState {
 
 export function useSlapTrivia() {
   const [setup, setSetup] = useState(true);
-  const [rulesOpen, setRulesOpen] = useState(false);
+  const [rulesOpen, setRulesOpenState] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [level, setLevel] = useState<Level | "">("");
   const [playerCount, setPlayerCount] = useState(3);
@@ -100,7 +113,18 @@ export function useSlapTrivia() {
     });
   }, [state]);
 
+  const setRulesOpen = (open: boolean) => {
+    playRulesSound();
+    setRulesOpenState(open);
+  };
+
+  const chooseLevel = (value: Level | "") => {
+    playUiTap();
+    setLevel(value);
+  };
+
   const setPlayerCountSafe = (count: number) => {
+    playUiTap();
     setPlayerCount(Math.max(3, Math.min(8, count)));
   };
 
@@ -109,12 +133,14 @@ export function useSlapTrivia() {
   };
 
   const cycleDraftAvatar = (index: number) => {
+    playAvatarSound();
     setDraftAvatars((prev) =>
       prev.map((avatar, i) => (i === index ? (avatar + 1) % AVATARS.length : avatar))
     );
   };
 
   const cycleAvatar = (index: number) => {
+    playAvatarSound();
     setAvatars((prev) =>
       prev.map((avatar, i) => (i === index ? (avatar + 1) % AVATARS.length : avatar))
     );
@@ -157,6 +183,7 @@ export function useSlapTrivia() {
 
   const startGame = () => {
     if (!level) {
+      playErrorSound();
       setStatus("Choose a question level first.");
       return;
     }
@@ -185,8 +212,10 @@ export function useSlapTrivia() {
       setSetup(false);
       setConfirmOpen(false);
       setRoundResult(null);
+      playStartSound();
       setStatus(`${nextNames[0]} reads first.`);
     } catch (error) {
+      playErrorSound();
       setLoadError(error instanceof Error ? error.message : "Could not load questions.");
       setStatus("Could not load questions.");
     } finally {
@@ -201,6 +230,7 @@ export function useSlapTrivia() {
       setConfirmOpen(true);
       return;
     }
+    playShowQuestionSound();
     setState((prev) => ({
       ...prev,
       questionVisible: true,
@@ -211,6 +241,7 @@ export function useSlapTrivia() {
   };
 
   const confirmShowQuestion = () => {
+    playConfirmSound();
     setConfirmOpen(false);
     setState((prev) => ({
       ...prev,
@@ -223,6 +254,7 @@ export function useSlapTrivia() {
 
   const showAnswer = () => {
     if (!currentQuestion || !state.questionVisible || roundResult) return;
+    playShowAnswerSound();
     setState((prev) => ({ ...prev, answerVisible: true }));
   };
 
@@ -290,10 +322,11 @@ export function useSlapTrivia() {
   const markCorrect = (index: number) => {
     if (index === state.reader || state.winner || roundResult) return;
     snapshot();
-    playCorrectSound();
     const scores = [...state.scores];
     scores[index] = (scores[index] ?? 0) + 1;
     const won = (scores[index] ?? 0) >= winTarget;
+    if (won) playWinSound();
+    else playCorrectSound();
     setState({
       ...state,
       scores,
@@ -364,6 +397,9 @@ export function useSlapTrivia() {
       resetGame();
       return;
     }
+    if (!(result.kind === "wrong" && result.allStumped)) {
+      playContinueSound();
+    }
     setRoundResult(null);
     if (result.kind === "correct") {
       const advanced = advanceQuestion(state, indexes);
@@ -384,6 +420,7 @@ export function useSlapTrivia() {
 
   const nextReader = () => {
     if (state.winner || !activeLevel || !names.length || roundResult) return;
+    playNextReaderSound();
     snapshot();
     const advanced = advanceQuestion(state, indexes);
     setIndexes(advanced.nextIndexes);
@@ -395,6 +432,7 @@ export function useSlapTrivia() {
 
   const undo = () => {
     if (!history.length) return;
+    playUndoSound();
     const previous = history[history.length - 1];
     if (!previous) return;
     setHistory((prev) => prev.slice(0, -1));
@@ -413,6 +451,7 @@ export function useSlapTrivia() {
   };
 
   const resetGame = () => {
+    playResetSound();
     setHistory([]);
     setState(emptyState());
     setConfirmOpen(false);
@@ -439,7 +478,7 @@ export function useSlapTrivia() {
     confirmOpen,
     setConfirmOpen,
     level,
-    setLevel,
+    setLevel: chooseLevel,
     playerCount,
     setPlayerCountSafe,
     winTarget,

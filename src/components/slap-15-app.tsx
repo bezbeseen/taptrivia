@@ -3,6 +3,7 @@
 import { useSlapTrivia } from "@/hooks/use-slap-trivia";
 import { PlayerAvatar } from "@/components/player-avatar";
 import { levelLabel } from "@/lib/questions";
+import { playUiTap } from "@/lib/sounds";
 import "@/app/slap15.css";
 
 export function Slap15App() {
@@ -315,7 +316,10 @@ export function Slap15App() {
               </button>
               <button
                 type="button"
-                onClick={() => game.setConfirmOpen(false)}
+                onClick={() => {
+                  playUiTap();
+                  game.setConfirmOpen(false);
+                }}
                 style={{ background: "#2c2f33", color: "#fff", minWidth: 120 }}
               >
                 No
