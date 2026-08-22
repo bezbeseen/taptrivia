@@ -1,15 +1,19 @@
-# Slap 15
+# SLAP 15
 
-A timing arena for the browser. Walk a 15-hand card, wait for the light, then slap. Jump early or miss the window and you take a strike. Three strikes ends the night.
+Party trivia from [the original SLAP 15 preview](https://raw.githack.com/bezbeseen/weddingmarking/slap-15-app/slap-15/preview.html).
 
-Records stay in this browser via `localStorage`. If storage is blocked, you can still play — scores just will not persist.
+One player reads. The others compete. First slap gets the first answer. First to 15 net points (or whatever you set) wins.
 
-## Play
+## How it plays
 
-- **Wait** for the cue. Do not guess.
-- **Slap** with the pad, a click, a tap, or Space / Enter.
-- Later names **feint**. The twitch is a lie.
-- Perfect and clean slaps build a **combo** that multiplies the score.
+- Pick a question level, 3–8 players, and the winning score.
+- The reader shows the question, then the answer.
+- **+1 Correct** for a right answer.
+- Wrong answers escalate per player: first miss −1, second −2, third −3, and so on.
+- The reader cannot score on their own question.
+- **Next Reader** rotates the card. **Undo Last** reverses the last score. **Reset Game** starts a new night but keeps each level’s question position.
+
+Question progress is stored in this browser by level.
 
 ## Run locally
 
@@ -27,4 +31,4 @@ npm start
 
 ## Stack
 
-Next.js, TypeScript, Tailwind CSS, and shadcn/ui.
+Next.js, TypeScript, Tailwind CSS, and shadcn/ui. The question bank is the same compressed set as the original `weddingmarking` SLAP 15 build.

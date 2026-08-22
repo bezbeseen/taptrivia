@@ -1,93 +1,292 @@
 "use client";
 
-import { useEffect } from "react";
-import { ArenaScreen } from "@/components/arena-screen";
-import { MenuScreen } from "@/components/menu-screen";
-import { RecordsScreen } from "@/components/records-screen";
-import { ResultScreen } from "@/components/result-screen";
-import { useSlapGame } from "@/hooks/use-slap-game";
-import { cn } from "@/lib/utils";
-
-const ARENA_PHASES = new Set([
-  "intro",
-  "waiting",
-  "feint",
-  "live",
-  "resolving",
-]);
+import { useSlapTrivia } from "@/hooks/use-slap-trivia";
+import { levelLabel } from "@/lib/questions";
+import "@/app/slap15.css";
 
 export function Slap15App() {
-  const game = useSlapGame();
-  const { phase, slap, startNight } = game;
-
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.repeat) return;
-      if (event.code !== "Space" && event.code !== "Enter") return;
-      const target = event.target as HTMLElement | null;
-      if (
-        target &&
-        (target.tagName === "BUTTON" ||
-          target.tagName === "INPUT" ||
-          target.isContentEditable)
-      ) {
-        return;
-      }
-      event.preventDefault();
-      if (phase === "menu" || phase === "over") {
-        startNight();
-        return;
-      }
-      slap();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [phase, slap, startNight]);
+  const game = useSlapTrivia();
 
   return (
-    <div
-      className={cn(
-        "relative z-0 flex min-h-dvh flex-col bg-[radial-gradient(circle_at_top,rgba(245,158,11,0.16),transparent_42%),linear-gradient(180deg,#09090b_0%,#18181b_100%)]",
-        game.shake && "arena-shake"
-      )}
-    >
-      {game.phase === "menu" ? (
-        <MenuScreen
-          onStart={game.startNight}
-          onRecords={game.showRecords}
-          bestScore={game.records.bestScore}
-          recordsReady={game.recordsReady}
-        />
-      ) : null}
-      {game.phase === "records" ? (
-        <RecordsScreen
-          records={game.records}
-          ready={game.recordsReady}
-          storageError={game.storageError}
-          onBack={game.showMenu}
-        />
-      ) : null}
-      {ARENA_PHASES.has(game.phase) ? (
-        <ArenaScreen
-          phase={game.phase as "intro" | "waiting" | "feint" | "live" | "resolving"}
-          fighter={game.fighter}
-          roundIndex={game.roundIndex}
-          score={game.score}
-          strikes={game.strikes}
-          combo={game.combo}
-          lastCall={game.lastCall}
-          lastCopy={game.lastCopy}
-          onSlap={game.slap}
-        />
-      ) : null}
-      {game.phase === "over" && game.run ? (
-        <ResultScreen
-          run={game.run}
-          storageError={game.storageError}
-          onAgain={game.startNight}
-          onMenu={game.showMenu}
-        />
-      ) : null}
+    <div className="slap15">
+      <div className="wrap">
+        <div className="top">
+          <div>
+            <h1>SLAP 15</h1>
+            <div className="sub">{game.subtitle}</div>
+          </div>
+          <div className="top-actions">
+            <div className="reader">
+              {game.names.length ? `${game.readerName} is reading` : "Set up the game"}
+            </div>
+            <button
+              type="button"
+              className="rules-btn"
+              onClick={() => game.setRulesOpen(!game.rulesOpen)}
+            >
+              {game.rulesOpen ? "Rules Open" : "Show Rules"}
+            </button>
+          </div>
+        </div>
+
+        {game.rulesOpen ? (
+          <section className="rules-panel">
+            <h2>Game Rules</h2>
+            <ul>
+              <li>One player reads while the others compete.</li>
+              <li>The full question must be read before anyone slaps.</li>
+              <li>First slap gets the first answer.</li>
+              <li>Correct answer: +1 point.</li>
+              <li>
+                Wrong answers escalate separately for each player: first miss -1,
+                second miss -2, third miss -3, and so on.
+              </li>
+              <li>
+                After a wrong first answer, another player gets one chance
+                without slapping.
+              </li>
+              <li>First player to reach the winning net points wins.</li>
+              <li>Questions continue forward even after Reset Game.</li>
+            </ul>
+            <button
+              type="button"
+              className="close-rules"
+              onClick={() => game.setRulesOpen(false)}
+            >
+              Close Rules
+            </button>
+          </section>
+        ) : null}
+
+        {game.setup ? (
+          <section className="question-panel">
+            <div className="qmeta">Game Setup</div>
+            <div className="qtext" style={{ minHeight: 0 }}>
+              Set the level, players, and winning score.
+            </div>
+            <div className="setup-grid">
+              <div className="setup-field">
+                <label htmlFor="levelSelect">Question level</label>
+                <select
+                  id="levelSelect"
+                  value={game.level}
+                  onChange={(event) =>
+                    game.setLevel(event.target.value as typeof game.level)
+                  }
+                >
+                  <option value="">Choose level</option>
+                  {game.levels.map((item) => (
+                    <option key={item.value} value={item.value}>
+                      {item.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="setup-field">
+                <label htmlFor="playerCount">Number of players</label>
+                <select
+                  id="playerCount"
+                  value={game.playerCount}
+                  onChange={(event) =>
+                    game.setPlayerCountSafe(Number(event.target.value))
+                  }
+                >
+                  {[3, 4, 5, 6, 7, 8].map((count) => (
+                    <option key={count} value={count}>
+                      {count}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="setup-field">
+                <label htmlFor="winScore">Points to win</label>
+                <input
+                  id="winScore"
+                  type="number"
+                  min={1}
+                  max={99}
+                  inputMode="numeric"
+                  value={game.winTarget}
+                  onChange={(event) =>
+                    game.setWinTarget(Number(event.target.value) || 1)
+                  }
+                />
+              </div>
+            </div>
+            <div className="name-fields">
+              {Array.from({ length: game.playerCount }, (_, index) => (
+                <div className="setup-field" key={index}>
+                  <label htmlFor={`playerName${index}`}>
+                    Player {index + 1} name
+                  </label>
+                  <input
+                    id={`playerName${index}`}
+                    type="text"
+                    maxLength={24}
+                    placeholder={`Player ${index + 1}`}
+                    value={game.draftNames[index] ?? ""}
+                    onChange={(event) =>
+                      game.setDraftName(index, event.target.value)
+                    }
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="setup-actions">
+              <button type="button" onClick={game.startGame} disabled={game.loading}>
+                {game.loading ? "Loading questions..." : "Start Game"}
+              </button>
+            </div>
+            {game.loadError ? <div className="error">{game.loadError}</div> : null}
+          </section>
+        ) : (
+          <section className="question-panel" aria-live="polite">
+            <div className="qmeta">
+              {game.activeLevel
+                ? `${game.readerName} is reading • ${levelLabel(game.activeLevel)}`
+                : "Ready"}
+            </div>
+            <div className="qtext">
+              {!game.currentQuestion
+                ? "Loading questions..."
+                : game.state.questionVisible
+                  ? game.currentQuestion.question
+                  : "Press Show Question when the reader is ready."}
+            </div>
+            {game.state.answerVisible && game.currentQuestion ? (
+              <div className="answer">{game.currentQuestion.answer}</div>
+            ) : null}
+            <div className="qbuttons">
+              <button
+                type="button"
+                onClick={game.showQuestion}
+                disabled={!!game.state.winner || !game.currentQuestion}
+              >
+                Show Question
+              </button>
+              <button
+                type="button"
+                onClick={game.showAnswer}
+                disabled={
+                  !game.state.questionVisible ||
+                  !!game.state.winner ||
+                  !game.currentQuestion
+                }
+              >
+                Show Answer
+              </button>
+            </div>
+          </section>
+        )}
+
+        {game.confirmOpen ? (
+          <div className="confirm">
+            <div style={{ fontSize: 22, marginBottom: 12 }}>
+              Answer already revealed
+            </div>
+            <div style={{ fontSize: 16, marginBottom: 14 }}>
+              Are you sure you want to show the question again?
+            </div>
+            <div
+              style={{
+                display: "flex",
+                gap: 10,
+                justifyContent: "center",
+                flexWrap: "wrap",
+              }}
+            >
+              <button
+                type="button"
+                onClick={game.confirmShowQuestion}
+                style={{ background: "#fff", color: "#b42318", minWidth: 120 }}
+              >
+                Yes
+              </button>
+              <button
+                type="button"
+                onClick={() => game.setConfirmOpen(false)}
+                style={{ background: "#2c2f33", color: "#fff", minWidth: 120 }}
+              >
+                No
+              </button>
+            </div>
+          </div>
+        ) : null}
+
+        <div className="players">
+          {game.names.map((name, index) => {
+            const eligible = index !== game.state.reader && !game.state.winner;
+            const nextPenalty = (game.state.misses[index] ?? 0) + 1;
+            return (
+              <section
+                key={`${name}-${index}`}
+                className={index === game.state.reader ? "card reading" : "card"}
+              >
+                <div className="name">{name}</div>
+                <div className="score">{game.state.scores[index] ?? 0}</div>
+                <div className="miss">
+                  {game.state.misses[index] ?? 0} wrong • next miss -{nextPenalty}
+                </div>
+                <div className="buttons">
+                  <button
+                    type="button"
+                    className={eligible ? "correct" : "correct disabled"}
+                    disabled={!eligible}
+                    onClick={() => game.markCorrect(index)}
+                  >
+                    +1 Correct
+                  </button>
+                  <button
+                    type="button"
+                    className={eligible ? "wrong" : "wrong disabled"}
+                    disabled={!eligible}
+                    onClick={() => game.markWrong(index)}
+                  >
+                    Wrong -{nextPenalty}
+                  </button>
+                </div>
+              </section>
+            );
+          })}
+        </div>
+
+        {game.state.winner ? (
+          <div className="winner">
+            {game.names[game.state.winner.index]} wins with{" "}
+            {game.state.scores[game.state.winner.index]} points!
+          </div>
+        ) : null}
+
+        <div className="bottom">
+          <button
+            type="button"
+            className="next"
+            onClick={game.nextReader}
+            disabled={!!game.state.winner || game.setup}
+          >
+            Next Reader
+          </button>
+          <button
+            type="button"
+            onClick={game.undo}
+            disabled={game.historyLength === 0}
+          >
+            Undo Last
+          </button>
+          <button type="button" onClick={game.resetGame}>
+            Reset Game
+          </button>
+        </div>
+
+        <div className="status" aria-live="polite">
+          {game.status}
+        </div>
+        <div className="rules">
+          Correct answer: +1. Wrong answers escalate separately for each player:
+          first miss -1, second miss -2, third miss -3, and so on. The reader
+          cannot answer their own question.
+        </div>
+      </div>
     </div>
   );
 }
