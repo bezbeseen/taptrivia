@@ -119,7 +119,7 @@
 }
 
 @layer base {
-  * {
+  *:not(script):not(style):not(nextjs-portal) {
     @apply border-border outline-ring/50;
   }
   body {
@@ -128,6 +128,16 @@
   html {
     @apply font-sans;
   }
+}
+
+script[data-nextjs-dev-overlay],
+nextjs-portal {
+  display: none !important;
+  pointer-events: none !important;
+  position: static !important;
+  inset: auto !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 @utility font-display {
