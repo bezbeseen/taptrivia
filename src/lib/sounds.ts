@@ -623,3 +623,21 @@ export function playRotateSound() {
 export function playPuzzleWin() {
   play(puzzleChime);
 }
+
+function chompJaw(ac: AudioContext) {
+  noiseBurst(ac, 0, 0.05, 0.14, 800);
+  tone(ac, { type: "square", freq: 160, endFreq: 70, dur: 0.1, gain: 0.13 });
+}
+
+function gulp(ac: AudioContext) {
+  tone(ac, { type: "sine", freq: 240, endFreq: 80, dur: 0.14, gain: 0.14 });
+  tone(ac, { type: "triangle", freq: 180, endFreq: 70, at: 0.04, dur: 0.12, gain: 0.08 });
+}
+
+export function playChompSound() {
+  play(chompJaw);
+}
+
+export function playGulpSound() {
+  play(gulp);
+}

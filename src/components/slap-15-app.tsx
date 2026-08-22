@@ -2,7 +2,7 @@
 
 import { useSlapTrivia } from "@/hooks/use-slap-trivia";
 import { PlayerAvatar } from "@/components/player-avatar";
-import { SideQuest } from "@/components/side-quest";
+import { HungryHippos } from "@/components/hungry-hippos";
 import { levelLabel } from "@/lib/questions";
 import { playUiTap } from "@/lib/sounds";
 import "@/app/slap15.css";
@@ -25,7 +25,7 @@ export function Slap15App() {
 
   if (game.puzzleOpen) {
     return (
-      <SideQuest
+      <HungryHippos
         players={game.names.map((name, index) => ({
           name,
           avatar: game.avatars[index] ?? index,
@@ -147,9 +147,10 @@ export function Slap15App() {
               </li>
               <li>First player to reach the winning net points wins.</li>
               <li>
-                After a correct answer, the whole table gets a short pipe
-                puzzle. Anybody can turn a pipe. It does not change the score.
-                Skip it anytime.
+                After a correct answer, the table plays a short Hungry Hungry
+                Hippos round. Mash the hippo facing you. First to five marbles
+                wins bragging rights — it does not change the score. Skip it
+                anytime.
               </li>
               <li>Questions continue forward even after Reset Game.</li>
             </ul>
