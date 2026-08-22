@@ -54,7 +54,10 @@ export function Slap15App() {
       <div className={`slap15 round-open ${tone}`}>
         <header className="result-header">
           <div>
-            <div className="brand">SLAP 15</div>
+            <div className="logo brand">
+              <span className="logo-slap">SLAP</span>
+              <span className="logo-15">15</span>
+            </div>
             <div className="result-reader">
               {game.readerName ? `${game.readerName} is still reading` : "Trivia showdown"}
             </div>
@@ -107,7 +110,10 @@ export function Slap15App() {
       <div className="wrap">
         <div className="top">
           <div>
-            <h1>SLAP 15</h1>
+            <h1 className="logo">
+              <span className="logo-slap">SLAP</span>
+              <span className="logo-15">15</span>
+            </h1>
             <div className="sub">{game.subtitle}</div>
           </div>
           <button
@@ -259,7 +265,7 @@ export function Slap15App() {
             </div>
             <div className="setup-actions">
               <button type="button" className="primary" onClick={game.startGame} disabled={game.loading}>
-                {game.loading ? "Loading questions..." : "Start game"}
+                {game.loading ? "Loading questions..." : "Let's play"}
               </button>
             </div>
             {game.loadError ? <div className="error">{game.loadError}</div> : null}

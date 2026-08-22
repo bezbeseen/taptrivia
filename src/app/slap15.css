@@ -1,9 +1,23 @@
 .slap15 {
+  --ink: light-dark(#1b1233, #fff4dc);
+  --paper: light-dark(#fff3d6, #171022);
+  --card: light-dark(#fffdf8, #26183f);
+  --muted: light-dark(#ffe7b8, #3a2a58);
+  --gold: #ffd23f;
+  --tomato: #ff3d6e;
+  --go: #17b978;
+  --grape: #7c3aed;
+  --shadow: 4px 5px 0 light-dark(#1b1233, #09060f);
   min-height: 100dvh;
-  background-color: light-dark(#f4f4f1, #111214);
-  color: light-dark(#18181b, #f5f5f5);
+  background-color: var(--paper);
+  background-image:
+    radial-gradient(circle at 8% 0%, rgb(255 210 63 / 0.34), transparent 32%),
+    radial-gradient(circle at 92% 6%, rgb(255 61 110 / 0.22), transparent 30%),
+    radial-gradient(circle at 50% 100%, rgb(124 58 237 / 0.16), transparent 36%);
+  color: var(--ink);
   padding: 24px;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--font-fredoka), "Fredoka", system-ui, sans-serif;
+  font-weight: 500;
 }
 
 .slap15 * {
@@ -11,7 +25,7 @@
 }
 
 .slap15 .wrap {
-  max-width: 900px;
+  max-width: 920px;
   margin: 0 auto;
 }
 
@@ -32,37 +46,87 @@
   justify-content: flex-end;
 }
 
-.slap15 h1 {
-  font-size: 32px;
-  line-height: 1.1;
+.slap15 .logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   margin: 0;
-  font-weight: 900;
-  letter-spacing: -0.03em;
+  line-height: 0.85;
+}
+
+.slap15 .logo-slap {
+  font-family: var(--font-bungee), "Bungee", Impact, sans-serif;
+  font-size: clamp(42px, 10vw, 68px);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: var(--tomato);
+  text-shadow: 3px 4px 0 light-dark(#1b1233, #09060f);
+}
+
+.slap15 .logo-15 {
+  display: grid;
+  place-items: center;
+  min-width: 54px;
+  height: 52px;
+  padding: 2px 8px 0;
+  background: var(--gold);
+  color: #1b1233;
+  border: 3px solid #1b1233;
+  border-radius: 16px;
+  font-family: var(--font-bungee), "Bungee", Impact, sans-serif;
+  font-size: 28px;
+  line-height: 1;
+  transform: rotate(-8deg);
+  box-shadow: 3px 4px 0 #1b1233;
+}
+
+.slap15 .result-header .logo {
+  gap: 8px;
+}
+
+.slap15 .result-header .logo-slap {
+  font-size: 28px;
+  text-shadow: 2px 2px 0 rgb(0 0 0 / 0.25);
+  color: inherit;
+}
+
+.slap15 .result-header .logo-15 {
+  min-width: 36px;
+  height: 34px;
+  font-size: 16px;
+  border-width: 2px;
+  box-shadow: 2px 2px 0 #1b1233;
 }
 
 .slap15 .sub {
-  margin-top: 6px;
-  opacity: 0.72;
+  margin-top: 8px;
+  font-size: 17px;
+  font-weight: 650;
+  opacity: 0.78;
 }
 
 .slap15 .reader {
   padding: 16px 22px;
-  border-radius: 16px;
-  background: light-dark(#fff, #1d1f22);
-  border: 2px solid light-dark(#18181b, #f5f5f5);
-  font-size: 30px;
+  border-radius: 18px;
+  background: var(--card);
+  border: 3px solid var(--ink);
+  box-shadow: var(--shadow);
+  font-family: var(--font-bungee), "Bungee", Impact, sans-serif;
+  font-size: 28px;
   line-height: 1.1;
-  font-weight: 950;
-  letter-spacing: -0.02em;
+  font-weight: 400;
+  letter-spacing: 0.02em;
   text-align: center;
   min-width: 260px;
 }
 
 .slap15 .rules-btn {
-  background: light-dark(#18181b, #f5f5f5);
-  color: light-dark(#fff, #111);
+  background: var(--ink);
+  color: var(--paper);
   min-width: 108px;
   min-height: 48px;
+  border: 3px solid light-dark(#1b1233, #fff4dc);
+  box-shadow: var(--shadow);
 }
 
 .slap15 .turn-banner {
@@ -71,9 +135,11 @@
   gap: 16px;
   padding: 16px 18px;
   margin-bottom: 18px;
-  border-radius: 22px;
-  background: light-dark(#18181b, #f5f5f5);
-  color: light-dark(#fff, #111);
+  border-radius: 24px;
+  background: #1b1233;
+  color: #fff4dc;
+  border: 3px solid #1b1233;
+  box-shadow: 5px 6px 0 #ffd23f;
   animation: turn-pop 0.35s ease-out;
 }
 
@@ -90,17 +156,20 @@
 }
 
 .slap15 .turn-kicker {
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.14em;
+  font-family: var(--font-bungee), "Bungee", Impact, sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  opacity: 0.72;
+  color: var(--gold);
+  opacity: 1;
 }
 
 .slap15 .turn-name {
-  font-size: clamp(34px, 9vw, 52px);
-  font-weight: 950;
-  letter-spacing: -0.045em;
+  font-family: var(--font-bungee), "Bungee", Impact, sans-serif;
+  font-size: clamp(34px, 9vw, 56px);
+  font-weight: 400;
+  letter-spacing: 0.02em;
   line-height: 0.95;
   margin: 2px 0 6px;
   overflow-wrap: anywhere;
@@ -108,9 +177,9 @@
 
 .slap15 .turn-hint {
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 550;
   line-height: 1.35;
-  opacity: 0.82;
+  opacity: 0.88;
 }
 
 @keyframes turn-pop {
@@ -125,9 +194,10 @@
 }
 
 .slap15 .question-panel {
-  background: light-dark(#fff, #1b1d20);
-  border: 1px solid light-dark(#d8d8d2, #34373b);
-  border-radius: 20px;
+  background: var(--card);
+  border: 3px solid var(--ink);
+  box-shadow: var(--shadow);
+  border-radius: 24px;
   padding: 18px;
   margin-bottom: 18px;
 }
@@ -145,19 +215,23 @@
 }
 
 .slap15 .setup-field label {
-  font-weight: 800;
-  font-size: 14px;
+  font-family: var(--font-bungee), "Bungee", Impact, sans-serif;
+  font-weight: 400;
+  font-size: 13px;
+  letter-spacing: 0.04em;
 }
 
 .slap15 .setup-field input,
 .slap15 .setup-field select {
   width: 100%;
-  min-height: 46px;
-  border: 1px solid light-dark(#ccc, #41454a);
-  border-radius: 11px;
+  min-height: 48px;
+  border: 3px solid var(--ink);
+  border-radius: 14px;
   padding: 9px 11px;
-  font-size: 16px;
-  background: light-dark(#fff, #15171a);
+  font-size: 17px;
+  font-family: inherit;
+  font-weight: 600;
+  background: var(--card);
   color: inherit;
 }
 
@@ -208,34 +282,37 @@
 
 .slap15 .setup-actions button {
   flex: 1 1 180px;
-  background: light-dark(#18181b, #f5f5f5);
-  color: light-dark(#fff, #111);
+  background: var(--gold);
+  color: #1b1233;
 }
 
 .slap15 .qmeta {
-  font-size: 13px;
-  font-weight: 800;
+  font-family: var(--font-bungee), "Bungee", Impact, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  opacity: 0.62;
+  color: var(--tomato);
+  opacity: 1;
   margin-bottom: 10px;
 }
 
 .slap15 .qtext {
-  font-size: clamp(22px, 4.4vw, 30px);
-  font-weight: 800;
-  line-height: 1.4;
+  font-size: clamp(24px, 4.6vw, 34px);
+  font-weight: 650;
+  line-height: 1.28;
   min-height: 72px;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
 }
 
 .slap15 .answer {
   margin-top: 14px;
   padding: 14px 16px;
-  border-radius: 14px;
-  background: light-dark(#ecece7, #292c30);
+  border-radius: 16px;
+  background: var(--muted);
+  border: 3px dashed var(--ink);
   font-size: clamp(18px, 3.2vw, 24px);
-  font-weight: 800;
+  font-weight: 650;
   line-height: 1.35;
 }
 
@@ -260,22 +337,26 @@
   align-items: center;
   gap: 12px;
   text-align: left;
-  background: light-dark(#ecece7, #292c30);
+  background: var(--muted);
   color: inherit;
   min-height: 60px;
   padding: 12px 14px;
-  font-size: 17px;
+  font-size: 18px;
+  font-weight: 600;
+  border: 3px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
 }
 
 .slap15 .choice-letter {
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
-  background: light-dark(#18181b, #f5f5f5);
-  color: light-dark(#fff, #111);
-  font-weight: 900;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--gold);
+  color: #1b1233;
+  font-family: var(--font-bungee), "Bungee", Impact, sans-serif;
+  font-weight: 400;
   flex: 0 0 auto;
 }
 
@@ -286,7 +367,7 @@
 
 .slap15 .qbuttons .nobody,
 .slap15 button.nobody {
-  background: #7c3aed !important;
+  background: var(--grape) !important;
   color: #fff !important;
 }
 
@@ -308,46 +389,57 @@
 }
 
 .slap15 .card {
-  background: light-dark(#fff, #1b1d20);
-  border: 1px solid light-dark(#d8d8d2, #34373b);
-  border-radius: 20px;
+  background: var(--card);
+  border: 3px solid var(--ink);
+  box-shadow: var(--shadow);
+  border-radius: 22px;
   padding: 16px 16px 18px;
   min-width: 0;
   position: relative;
 }
 
 .slap15 .reading {
-  outline: 3px solid light-dark(#18181b, #f5f5f5);
-  outline-offset: 2px;
+  outline: none;
+  background: var(--gold);
+  color: #1b1233;
 }
 
 .slap15 .reading-pill {
   position: absolute;
   top: 12px;
   right: 12px;
-  padding: 4px 8px;
+  padding: 5px 9px;
   border-radius: 999px;
-  background: light-dark(#18181b, #f5f5f5);
-  color: light-dark(#fff, #111);
+  background: #1b1233;
+  color: var(--gold);
+  font-family: var(--font-bungee), "Bungee", Impact, sans-serif;
   font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
+  font-weight: 400;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
 .slap15 .name {
   text-align: center;
-  font-size: 24px;
-  font-weight: 900;
+  font-family: var(--font-bungee), "Bungee", Impact, sans-serif;
+  font-size: 22px;
+  font-weight: 400;
   margin-top: 8px;
+  letter-spacing: 0.02em;
 }
 
 .slap15 .score {
   text-align: center;
-  font-size: 64px;
-  font-weight: 950;
-  line-height: 1;
-  margin: 14px 0 6px;
+  font-family: var(--font-bungee), "Bungee", Impact, sans-serif;
+  font-size: 68px;
+  font-weight: 400;
+  line-height: 0.9;
+  margin: 12px 0 6px;
+  color: var(--tomato);
+}
+
+.slap15 .reading .score {
+  color: #1b1233;
 }
 
 .slap15 .miss {
@@ -366,21 +458,28 @@
   text-align: center;
   padding: 14px 12px;
   border-radius: 14px;
-  background: light-dark(#ecece7, #292c30);
-  font-weight: 800;
+  background: rgb(27 18 51 / 0.1);
+  font-weight: 650;
   font-size: 15px;
   line-height: 1.3;
 }
 
 .slap15 button {
-  border: 0;
+  border: 3px solid #1b1233;
   border-radius: 16px;
   min-height: 56px;
   padding: 12px 14px;
-  font-size: 17px;
-  font-weight: 800;
+  font-family: var(--font-fredoka), "Fredoka", system-ui, sans-serif;
+  font-size: 18px;
+  font-weight: 650;
   cursor: pointer;
   line-height: 1.15;
+  box-shadow: 3px 4px 0 #1b1233;
+}
+
+.slap15 button:active:not(:disabled) {
+  transform: translate(2px, 3px);
+  box-shadow: 1px 1px 0 #1b1233;
 }
 
 .slap15 button:focus-visible {
@@ -400,15 +499,24 @@
 .slap15 .avatar-btn {
   min-height: 0;
   padding: 0;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+.slap15 .avatar-pick:active:not(:disabled),
+.slap15 .avatar-btn:active:not(:disabled) {
+  transform: none;
+  box-shadow: none;
 }
 
 .slap15 .correct {
-  background: #1e8e4a;
-  color: #fff;
+  background: var(--go);
+  color: #083b27;
 }
 
 .slap15 .wrong {
-  background: #b42318;
+  background: var(--tomato);
   color: #fff;
 }
 
@@ -427,15 +535,15 @@
 
 .slap15 .bottom button,
 .slap15 .qbuttons button {
-  background: light-dark(#e4e4df, #2c2f33);
+  background: var(--muted);
   color: inherit;
   padding: 12px 16px;
 }
 
 .slap15 .primary,
 .slap15 .next {
-  background: light-dark(#18181b, #f5f5f5) !important;
-  color: light-dark(#fff, #111) !important;
+  background: var(--gold) !important;
+  color: #1b1233 !important;
 }
 
 .slap15 .bottom .primary {
@@ -449,72 +557,86 @@
 .slap15 .status {
   margin-top: 18px;
   padding: 14px 16px;
-  border-radius: 14px;
-  background: light-dark(#e9e9e4, #24272b);
-  font-weight: 700;
+  border-radius: 16px;
+  background: var(--card);
+  border: 3px solid var(--ink);
+  box-shadow: var(--shadow);
+  font-weight: 650;
 }
 
 .slap15 .winner {
-  font-size: 24px;
+  font-family: var(--font-bungee), "Bungee", Impact, sans-serif;
+  font-size: 28px;
   text-align: center;
   padding: 20px;
-  background: #1e8e4a;
-  color: white;
+  background: var(--go);
+  color: #083b27;
+  border: 3px solid #1b1233;
+  box-shadow: var(--shadow);
   border-radius: 18px;
   margin-top: 18px;
-  font-weight: 900;
-}
-
-.slap15 .rules {
-  font-size: 13px;
-  opacity: 0.68;
-  margin-top: 18px;
-  line-height: 1.45;
+  font-weight: 400;
 }
 
 .slap15 .rules-panel {
   margin-bottom: 18px;
   padding: 18px;
-  border-radius: 18px;
-  background: light-dark(#fff, #1b1d20);
-  border: 2px solid light-dark(#18181b, #f5f5f5);
+  border-radius: 22px;
+  background: var(--card);
+  border: 3px solid var(--ink);
+  box-shadow: var(--shadow);
 }
 
 .slap15 .rules-panel h2 {
   margin: 0 0 12px;
-  font-size: 24px;
-}
-
-.slap15 .rules-panel ul {
-  margin: 0;
-  padding-left: 22px;
-  line-height: 1.55;
+  font-family: var(--font-bungee), "Bungee", Impact, sans-serif;
+  font-size: 28px;
+  font-weight: 400;
 }
 
 .slap15 .rules-panel .close-rules {
   margin-top: 14px;
-  background: light-dark(#e4e4df, #2c2f33);
+  background: var(--muted);
   color: inherit;
 }
 
 .slap15 .confirm {
   margin-bottom: 18px;
   padding: 18px;
-  border-radius: 18px;
-  background: #b42318;
+  border-radius: 22px;
+  background: var(--tomato);
   color: #fff;
   text-align: center;
-  font-weight: 800;
+  font-weight: 650;
+  border: 3px solid #1b1233;
+  box-shadow: var(--shadow);
 }
 
 .slap15 .confirm-title {
-  font-size: 22px;
+  font-family: var(--font-bungee), "Bungee", Impact, sans-serif;
+  font-size: 24px;
   margin-bottom: 8px;
+  font-weight: 400;
+}
+
+.slap15 .rules {
+  font-size: 14px;
+  font-weight: 550;
+  opacity: 0.72;
+  margin-top: 18px;
+  line-height: 1.45;
+}
+
+.slap15 .rules-panel ul {
+  margin: 0;
+  padding-left: 22px;
+  line-height: 1.55;
+  font-weight: 550;
 }
 
 .slap15 .confirm-copy {
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 600;
   margin-bottom: 14px;
   opacity: 0.92;
 }
@@ -528,22 +650,23 @@
 
 .slap15 .confirm-actions button {
   min-width: 140px;
-  background: #2c2f33;
-  color: #fff;
+  background: #1b1233;
+  color: #fff4dc;
 }
 
 .slap15 .confirm-actions .primary {
-  background: #fff !important;
-  color: #b42318 !important;
+  background: var(--gold) !important;
+  color: #1b1233 !important;
 }
 
 .slap15 .error {
   margin-top: 12px;
   padding: 12px 14px;
-  border-radius: 12px;
-  background: #b42318;
+  border-radius: 14px;
+  background: var(--tomato);
   color: #fff;
-  font-weight: 800;
+  font-weight: 650;
+  border: 3px solid #1b1233;
 }
 
 @keyframes slap-result-in {
@@ -579,23 +702,23 @@
 
 .slap15 .result-header .brand {
   font-size: 18px;
-  font-weight: 950;
-  letter-spacing: -0.03em;
+  font-weight: 400;
 }
 
 .slap15 .result-reader {
-  margin-top: 2px;
+  margin-top: 4px;
   font-size: 15px;
-  font-weight: 800;
-  opacity: 0.86;
+  font-weight: 600;
+  opacity: 0.9;
 }
 
 .slap15 .result-tap {
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
+  font-family: var(--font-bungee), "Bungee", Impact, sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  opacity: 0.75;
+  opacity: 0.8;
   padding-top: 4px;
 }
 
@@ -617,20 +740,20 @@
 
 .slap15 .round-result.correct,
 .slap15.round-open.correct {
-  background: #15803d;
-  color: #fff;
+  background: #128a5a;
+  color: #f4fff4;
 }
 
 .slap15 .round-result.wrong,
 .slap15.round-open.wrong {
-  background: #b42318;
-  color: #fff;
+  background: #e11d48;
+  color: #fff5f7;
 }
 
 .slap15 .round-result.win,
 .slap15.round-open.win {
-  background: #111827;
-  color: #fde68a;
+  background: #1b1233;
+  color: var(--gold);
 }
 
 .slap15 .round-result svg {
@@ -641,21 +764,26 @@
 }
 
 .slap15 .round-name {
-  font-size: clamp(28px, 7vw, 44px);
-  font-weight: 900;
-  letter-spacing: -0.03em;
+  font-family: var(--font-bungee), "Bungee", Impact, sans-serif;
+  font-size: clamp(26px, 6vw, 42px);
+  font-weight: 400;
+  letter-spacing: 0.02em;
 }
 
 .slap15 .round-verdict {
-  font-size: clamp(56px, 16vw, 104px);
-  font-weight: 950;
-  letter-spacing: -0.05em;
-  line-height: 0.9;
+  font-family: var(--font-bungee), "Bungee", Impact, sans-serif;
+  font-size: clamp(56px, 16vw, 108px);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  line-height: 0.86;
+  transform: rotate(-2deg);
+  text-shadow: 4px 5px 0 rgb(0 0 0 / 0.22);
 }
 
 .slap15 .round-delta {
+  font-family: var(--font-bungee), "Bungee", Impact, sans-serif;
   font-size: clamp(40px, 10vw, 72px);
-  font-weight: 950;
+  font-weight: 400;
   line-height: 1;
 }
 
@@ -702,10 +830,13 @@
   min-height: 56px;
   padding: 12px 22px;
   border-radius: 16px;
-  background: #fff;
-  color: #111;
-  font-size: 20px;
-  font-weight: 900;
+  background: var(--gold);
+  color: #1b1233;
+  font-family: var(--font-bungee), "Bungee", Impact, sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  border: 3px solid #1b1233;
+  box-shadow: 4px 5px 0 #1b1233;
 }
 
 .slap15 .round-result.win .round-continue {
@@ -720,6 +851,12 @@
 @media (prefers-reduced-motion: reduce) {
   .slap15 .round-result {
     animation: none;
+  }
+  .slap15 .round-verdict {
+    transform: none;
+  }
+  .slap15 button:active:not(:disabled) {
+    transform: none;
   }
 }
 
@@ -737,10 +874,10 @@
   height: 100svh;
   padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
     max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
-  background: #0c0a09;
-  color: #fafaf9;
+  background: #171022;
+  color: #fff4dc;
   overflow: hidden;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--font-fredoka), "Fredoka", system-ui, sans-serif;
 }
 
 .side-quest-root,
@@ -757,14 +894,16 @@
   top: max(12px, env(safe-area-inset-top));
   right: max(12px, env(safe-area-inset-right));
   appearance: none;
-  border: 0;
-  background: rgb(255 255 255 / 0.12);
-  color: #fff;
+  border: 3px solid #1b1233;
+  background: #ffd23f;
+  color: #1b1233;
   min-height: 44px;
   padding: 8px 16px;
   border-radius: 999px;
+  font-family: var(--font-fredoka), "Fredoka", system-ui, sans-serif;
   font-size: 15px;
-  font-weight: 800;
+  font-weight: 650;
+  box-shadow: 3px 3px 0 #1b1233;
   touch-action: manipulation;
 }
 
@@ -783,19 +922,22 @@
 }
 
 .side-quest-kicker {
+  font-family: var(--font-bungee), "Bungee", Impact, sans-serif;
   font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.14em;
+  font-weight: 400;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  opacity: 0.7;
+  color: #ffd23f;
+  opacity: 1;
 }
 
 .side-quest-title {
   margin: 6px 0 8px;
+  font-family: var(--font-bungee), "Bungee", Impact, sans-serif;
   font-size: clamp(28px, 6vw, 48px);
-  font-weight: 950;
-  letter-spacing: -0.04em;
-  line-height: 1;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  line-height: 0.9;
 }
 
 .side-quest-hint {
@@ -823,7 +965,7 @@
   border-radius: 999px;
   background: rgb(255 255 255 / 0.08);
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 650;
 }
 
 .side-quest-seat svg {
@@ -847,9 +989,10 @@
 .side-quest-port {
   display: grid;
   place-items: center;
+  font-family: var(--font-bungee), "Bungee", Impact, sans-serif;
   font-size: 13px;
-  font-weight: 900;
-  letter-spacing: 0.08em;
+  font-weight: 400;
+  letter-spacing: 0.06em;
 }
 
 .side-quest-port.in,
@@ -948,8 +1091,8 @@
   .slap15 .score {
     font-size: 54px;
   }
-  .slap15 h1 {
-    font-size: 27px;
+  .slap15 .logo-slap {
+    font-size: 40px;
   }
   .slap15 .reader {
     font-size: 24px;
