@@ -10,6 +10,18 @@ export function Slap15App() {
   const game = useSlapTrivia();
   const result = game.roundResult;
 
+  const turnHint = game.state.winner
+    ? `${game.names[game.state.winner.index]} just took the game.`
+    : !game.state.questionVisible
+      ? "Tap Show Question when you're ready."
+      : game.state.multipleChoice && !game.state.answerVisible
+        ? "Table's stumped. Pick a letter."
+        : game.state.answerVisible
+          ? "Mark who scored, then keep going."
+          : "Everyone else slaps in after the question is read.";
+
+  const turnKicker = game.state.winner ? "Winner" : "Now reading";
+
   if (result) {
     const tone =
       result.won
@@ -27,6 +39,15 @@ export function Slap15App() {
 
     return (
       <div className={`slap15 round-open ${tone}`}>
+        <header className="result-header">
+          <div>
+            <div className="brand">SLAP 15</div>
+            <div className="result-reader">
+              {game.readerName ? `${game.readerName} is still reading` : "Trivia showdown"}
+            </div>
+          </div>
+          <span className="result-tap">Tap to continue</span>
+        </header>
         <div
           className={`round-result ${tone}`}
           role="button"
@@ -76,18 +97,13 @@ export function Slap15App() {
             <h1>SLAP 15</h1>
             <div className="sub">{game.subtitle}</div>
           </div>
-          <div className="top-actions">
-            <div className="reader">
-              {game.names.length ? `${game.readerName} is reading` : "Set up the game"}
-            </div>
-            <button
-              type="button"
-              className="rules-btn"
-              onClick={() => game.setRulesOpen(!game.rulesOpen)}
-            >
-              {game.rulesOpen ? "Rules Open" : "Show Rules"}
-            </button>
-          </div>
+          <button
+            type="button"
+            className="rules-btn"
+            onClick={() => game.setRulesOpen(!game.rulesOpen)}
+          >
+            {game.rulesOpen ? "Hide rules" : "Rules"}
+          </button>
         </div>
 
         {game.rulesOpen ? (
@@ -118,14 +134,29 @@ export function Slap15App() {
               className="close-rules"
               onClick={() => game.setRulesOpen(false)}
             >
-              Close Rules
+              Close rules
             </button>
+          </section>
+        ) : null}
+
+        {!game.setup ? (
+          <section className="turn-banner" key={game.state.reader}>
+            <PlayerAvatar
+              id={game.readerAvatar}
+              size={88}
+              title={game.readerName}
+            />
+            <div className="turn-copy">
+              <div className="turn-kicker">{turnKicker}</div>
+              <div className="turn-name">{game.readerName}</div>
+              <div className="turn-hint">{turnHint}</div>
+            </div>
           </section>
         ) : null}
 
         {game.setup ? (
           <section className="question-panel">
-            <div className="qmeta">Game Setup</div>
+            <div className="qmeta">Game setup</div>
             <div className="qtext" style={{ minHeight: 0 }}>
               Set the level, players, and winning score.
             </div>
@@ -209,8 +240,8 @@ export function Slap15App() {
               ))}
             </div>
             <div className="setup-actions">
-              <button type="button" onClick={game.startGame} disabled={game.loading}>
-                {game.loading ? "Loading questions..." : "Start Game"}
+              <button type="button" className="primary" onClick={game.startGame} disabled={game.loading}>
+                {game.loading ? "Loading questions..." : "Start game"}
               </button>
             </div>
             {game.loadError ? <div className="error">{game.loadError}</div> : null}
@@ -218,19 +249,20 @@ export function Slap15App() {
         ) : (
           <section className="question-panel" aria-live="polite">
             <div className="qmeta">
-              {game.activeLevel
-                ? `${game.readerName} is reading • ${levelLabel(game.activeLevel)}`
-                : "Ready"}
+              {game.activeLevel ? levelLabel(game.activeLevel) : "Ready"}
             </div>
             <div className="qtext">
               {!game.currentQuestion
                 ? "Loading questions..."
                 : game.state.questionVisible
                   ? game.currentQuestion.question
-                  : "Press Show Question when the reader is ready."}
+                  : "Show the question when the reader is ready."}
             </div>
             {game.state.answerVisible && game.currentQuestion ? (
-              <div className="answer">{game.currentQuestion.answer}</div>
+              <div className="answer">
+                <span>Answer</span>
+                {game.currentQuestion.answer}
+              </div>
             ) : null}
             {game.state.questionVisible &&
             game.state.multipleChoice &&
@@ -258,13 +290,19 @@ export function Slap15App() {
             <div className="qbuttons">
               <button
                 type="button"
+                className={!game.state.questionVisible ? "primary" : undefined}
                 onClick={game.showQuestion}
                 disabled={!!game.state.winner || !game.currentQuestion}
               >
-                Show Question
+                Show question
               </button>
               <button
                 type="button"
+                className={
+                  game.state.questionVisible && !game.state.answerVisible
+                    ? "primary"
+                    : undefined
+                }
                 onClick={game.showAnswer}
                 disabled={
                   !game.state.questionVisible ||
@@ -272,10 +310,11 @@ export function Slap15App() {
                   !game.currentQuestion
                 }
               >
-                Show Answer
+                Reveal answer
               </button>
               <button
                 type="button"
+                className="nobody"
                 onClick={game.enableMultipleChoice}
                 disabled={
                   !game.state.questionVisible ||
@@ -293,26 +332,17 @@ export function Slap15App() {
 
         {game.confirmOpen ? (
           <div className="confirm">
-            <div style={{ fontSize: 22, marginBottom: 12 }}>
-              Answer already revealed
+            <div className="confirm-title">Answer already revealed</div>
+            <div className="confirm-copy">
+              Show the question again anyway?
             </div>
-            <div style={{ fontSize: 16, marginBottom: 14 }}>
-              Are you sure you want to show the question again?
-            </div>
-            <div
-              style={{
-                display: "flex",
-                gap: 10,
-                justifyContent: "center",
-                flexWrap: "wrap",
-              }}
-            >
+            <div className="confirm-actions">
               <button
                 type="button"
+                className="primary"
                 onClick={game.confirmShowQuestion}
-                style={{ background: "#fff", color: "#b42318", minWidth: 120 }}
               >
-                Yes
+                Yes, show it
               </button>
               <button
                 type="button"
@@ -320,9 +350,8 @@ export function Slap15App() {
                   playUiTap();
                   game.setConfirmOpen(false);
                 }}
-                style={{ background: "#2c2f33", color: "#fff", minWidth: 120 }}
               >
-                No
+                No, keep going
               </button>
             </div>
           </div>
@@ -330,13 +359,15 @@ export function Slap15App() {
 
         <div className="players">
           {game.names.map((name, index) => {
-            const eligible = index !== game.state.reader && !game.state.winner;
+            const isReader = index === game.state.reader;
+            const eligible = !isReader && !game.state.winner;
             const nextPenalty = (game.state.misses[index] ?? 0) + 1;
             return (
               <section
                 key={`${name}-${index}`}
-                className={index === game.state.reader ? "card reading" : "card"}
+                className={isReader ? "card reading" : "card"}
               >
+                {isReader ? <div className="reading-pill">Reading</div> : null}
                 <button
                   type="button"
                   className="avatar-btn"
@@ -352,26 +383,33 @@ export function Slap15App() {
                 <div className="name">{name}</div>
                 <div className="score">{game.state.scores[index] ?? 0}</div>
                 <div className="miss">
-                  {game.state.misses[index] ?? 0} wrong • next miss -{nextPenalty}
+                  {game.state.misses[index] ?? 0} wrong
+                  {isReader ? "" : ` · next miss −${nextPenalty}`}
                 </div>
-                <div className="buttons">
-                  <button
-                    type="button"
-                    className={eligible ? "correct" : "correct disabled"}
-                    disabled={!eligible}
-                    onClick={() => game.markCorrect(index)}
-                  >
-                    +1 Correct
-                  </button>
-                  <button
-                    type="button"
-                    className={eligible ? "wrong" : "wrong disabled"}
-                    disabled={!eligible}
-                    onClick={() => game.markWrong(index)}
-                  >
-                    Wrong -{nextPenalty}
-                  </button>
-                </div>
+                {isReader ? (
+                  <div className="seat-note">Sit this one out. You&apos;re reading.</div>
+                ) : (
+                  <div className="buttons">
+                    <button
+                      type="button"
+                      className={eligible ? "correct" : "correct disabled"}
+                      disabled={!eligible}
+                      onClick={() => game.markCorrect(index)}
+                    >
+                      Correct
+                      <span className="btn-sub">+1 point</span>
+                    </button>
+                    <button
+                      type="button"
+                      className={eligible ? "wrong" : "wrong disabled"}
+                      disabled={!eligible}
+                      onClick={() => game.markWrong(index)}
+                    >
+                      Wrong
+                      <span className="btn-sub">−{nextPenalty} this miss</span>
+                    </button>
+                  </div>
+                )}
               </section>
             );
           })}
@@ -387,21 +425,24 @@ export function Slap15App() {
         <div className="bottom">
           <button
             type="button"
-            className="next"
+            className="primary next"
             onClick={game.nextReader}
             disabled={!!game.state.winner || game.setup}
           >
-            Next Reader
+            Next reader
+            {game.nextReaderName ? (
+              <span className="btn-sub">{game.nextReaderName}&apos;s turn</span>
+            ) : null}
           </button>
           <button
             type="button"
             onClick={game.undo}
             disabled={game.historyLength === 0}
           >
-            Undo Last
+            Undo last
           </button>
           <button type="button" onClick={game.resetGame}>
-            Reset Game
+            Reset game
           </button>
         </div>
 
@@ -409,10 +450,8 @@ export function Slap15App() {
           {game.status}
         </div>
         <div className="rules">
-          Correct answer: +1. Wrong answers escalate separately for each player:
-          first miss -1, second miss -2, third miss -3, and so on. The reader
-          cannot answer their own question. If nobody knows, it becomes multiple
-          choice.
+          Correct: +1. Wrongs escalate per player (−1, −2, −3…). The reader
+          cannot score. If nobody knows, it becomes multiple choice.
         </div>
       </div>
     </div>

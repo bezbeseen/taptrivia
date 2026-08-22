@@ -9,6 +9,7 @@ const n = {
   answer: 0,
   continue: 0,
   mc: 0,
+  fart: 0,
 };
 
 type Fx = (ac: AudioContext) => void;
@@ -78,6 +79,18 @@ function tone(
   osc.stop(now + dur + 0.02);
 }
 
+function brownNoise(ac: AudioContext, dur: number) {
+  const frames = Math.max(1, Math.floor(ac.sampleRate * dur));
+  const buffer = ac.createBuffer(1, frames, ac.sampleRate);
+  const data = buffer.getChannelData(0);
+  let last = 0;
+  for (let i = 0; i < frames; i++) {
+    last = last * 0.93 + (Math.random() * 2 - 1) * 0.07;
+    data[i] = last * 3.2;
+  }
+  return buffer;
+}
+
 function noiseBurst(
   ac: AudioContext,
   at: number,
@@ -86,12 +99,8 @@ function noiseBurst(
   freq = 1200,
   type: BiquadFilterType = "lowpass"
 ) {
-  const frames = Math.max(1, Math.floor(ac.sampleRate * dur));
-  const buffer = ac.createBuffer(1, frames, ac.sampleRate);
-  const data = buffer.getChannelData(0);
-  for (let i = 0; i < frames; i++) data[i] = Math.random() * 2 - 1;
   const src = ac.createBufferSource();
-  src.buffer = buffer;
+  src.buffer = brownNoise(ac, dur);
   const filter = ac.createBiquadFilter();
   filter.type = type;
   filter.frequency.value = freq;
@@ -101,6 +110,39 @@ function noiseBurst(
   filter.connect(amp);
   amp.connect(ac.destination);
   src.start(ac.currentTime + at);
+}
+
+function noiseSweep(
+  ac: AudioContext,
+  {
+    at = 0,
+    dur,
+    gain,
+    startFreq,
+    endFreq,
+    q = 5,
+  }: {
+    at?: number;
+    dur: number;
+    gain: number;
+    startFreq: number;
+    endFreq: number;
+    q?: number;
+  }
+) {
+  const now = ac.currentTime + at;
+  const src = ac.createBufferSource();
+  src.buffer = brownNoise(ac, dur);
+  const filter = ac.createBiquadFilter();
+  filter.type = "lowpass";
+  filter.Q.value = q;
+  filter.frequency.setValueAtTime(startFreq, now);
+  filter.frequency.exponentialRampToValueAtTime(Math.max(endFreq, 28), now + dur);
+  const amp = envGain(ac, now, gain, dur);
+  src.connect(filter);
+  filter.connect(amp);
+  amp.connect(ac.destination);
+  src.start(now);
 }
 
 function chord(ac: AudioContext, freqs: number[], at: number, dur: number, gain: number, type: OscillatorType = "square") {
@@ -177,9 +219,61 @@ function wahWah(ac: AudioContext) {
 }
 
 function raspberry(ac: AudioContext) {
-  noiseBurst(ac, 0, 0.32, 0.16, 420);
-  tone(ac, { type: "sawtooth", freq: 70, endFreq: 55, dur: 0.32, gain: 0.14 });
-  tone(ac, { type: "square", freq: 90, endFreq: 60, dur: 0.28, gain: 0.08 });
+  noiseSweep(ac, { dur: 0.34, gain: 0.2, startFreq: 260, endFreq: 70, q: 3 });
+  tone(ac, { type: "sawtooth", freq: 70, endFreq: 48, dur: 0.32, gain: 0.14 });
+  tone(ac, { type: "square", freq: 90, endFreq: 55, dur: 0.28, gain: 0.08 });
+}
+
+function wetFart(ac: AudioContext) {
+  noiseSweep(ac, { dur: 0.5, gain: 0.24, startFreq: 190, endFreq: 48 });
+  noiseSweep(ac, { at: 0.1, dur: 0.28, gain: 0.14, startFreq: 140, endFreq: 60, q: 8 });
+  tone(ac, { type: "sine", freq: 58, endFreq: 36, dur: 0.48, gain: 0.2 });
+  tone(ac, { type: "sawtooth", freq: 82, endFreq: 44, dur: 0.4, gain: 0.07 });
+}
+
+function tootFart(ac: AudioContext) {
+  tone(ac, { type: "square", freq: 98, endFreq: 68, dur: 0.13, gain: 0.17 });
+  noiseSweep(ac, { dur: 0.16, gain: 0.18, startFreq: 240, endFreq: 70 });
+  tone(ac, { type: "sine", freq: 72, endFreq: 46, at: 0.1, dur: 0.18, gain: 0.16 });
+}
+
+function longFart(ac: AudioContext) {
+  noiseSweep(ac, { dur: 0.78, gain: 0.22, startFreq: 170, endFreq: 34, q: 4 });
+  tone(ac, { type: "sine", freq: 52, endFreq: 28, dur: 0.78, gain: 0.18 });
+  tone(ac, { type: "sawtooth", freq: 88, endFreq: 38, dur: 0.6, gain: 0.07 });
+}
+
+function squeakyFart(ac: AudioContext) {
+  tone(ac, { type: "square", freq: 260, endFreq: 70, dur: 0.3, gain: 0.12 });
+  noiseSweep(ac, { at: 0.04, dur: 0.34, gain: 0.2, startFreq: 420, endFreq: 55, q: 6 });
+  tone(ac, { type: "sine", freq: 96, endFreq: 40, at: 0.12, dur: 0.3, gain: 0.15 });
+}
+
+function doubleToot(ac: AudioContext) {
+  tootFart(ac);
+  tone(ac, { type: "square", freq: 84, endFreq: 52, at: 0.24, dur: 0.18, gain: 0.17 });
+  noiseSweep(ac, { at: 0.24, dur: 0.2, gain: 0.16, startFreq: 200, endFreq: 48 });
+  tone(ac, { type: "sine", freq: 64, endFreq: 38, at: 0.28, dur: 0.18, gain: 0.14 });
+}
+
+function rippleFart(ac: AudioContext) {
+  [0, 0.1, 0.2, 0.34].forEach((at, i) => {
+    noiseSweep(ac, {
+      at,
+      dur: 0.13,
+      gain: 0.16 - i * 0.02,
+      startFreq: 210 - i * 28,
+      endFreq: 58,
+    });
+    tone(ac, {
+      type: "sine",
+      freq: 86 - i * 8,
+      endFreq: 42,
+      at,
+      dur: 0.13,
+      gain: 0.11,
+    });
+  });
 }
 
 function goat(ac: AudioContext) {
@@ -418,27 +512,15 @@ const CORRECT: Fx[] = [
   taDa,
 ];
 
-const WRONG: Fx[] = [
-  honk,
-  duck,
-  sadTrombone,
-  recordScratch,
-  splat,
+const FARTS: Fx[] = [
+  wetFart,
+  tootFart,
+  longFart,
+  squeakyFart,
+  doubleToot,
+  rippleFart,
   raspberry,
-  goat,
-  catYowl,
-  buzzer,
-  glassBreak,
-  wilhelmLite,
-  failPiano,
-  bikeHorn,
-  slideWhistleDown,
-  sneeze,
-  bonk,
-  klaxon,
 ];
-
-const NOPE: Fx[] = [duck, bikeHorn, bonk, hiccup, cuckoo, whipCrack, rimshot];
 const TAPS: Fx[] = [pop, blip, cowbell, boing, laserPew];
 const AVATARS: Fx[] = [boing, duck, hiccup, sparkle, goat, bubblePop, cartoonZip];
 const QUESTIONS: Fx[] = [whoosh, whipCrack, cartoonZip, drumroll, rimshot];
@@ -455,11 +537,11 @@ export function playCorrectSound() {
 }
 
 export function playWrongSound() {
-  cycle(WRONG, "wrong");
+  cycle(FARTS, "fart");
 }
 
 export function playNopeSound() {
-  cycle(NOPE, "nope");
+  cycle(FARTS, "fart");
 }
 
 export function playMultipleChoiceSound() {

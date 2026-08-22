@@ -63,6 +63,11 @@
   const startGame = root.querySelector("#startGame");
   const gameSubtitle = root.querySelector("#gameSubtitle");
   const roundResultBox = root.querySelector("#roundResult");
+  const turnBanner = root.querySelector("#turnBanner");
+  const turnKicker = root.querySelector("#turnKicker");
+  const turnHint = root.querySelector("#turnHint");
+  const turnAvatar = root.querySelector("#turnAvatar");
+  const nextReaderBtn = root.querySelector("#nextReader");
   let roundResult = null;
 
   function emptyState(count) {
@@ -278,7 +283,10 @@
           : "";
     roundResultBox.hidden = false;
     roundResultBox.className = "round-result " + tone;
-    let html = "";
+    let html =
+      '<div class="result-header"><div><div class="brand">SLAP 15</div><div class="result-reader">' +
+      (names[state.reader] ? names[state.reader] + " is still reading" : "Trivia showdown") +
+      '</div></div><span class="result-tap">Tap to continue</span></div>';
     if (roundResult.playerIndex !== null) {
       html += '<span class="avatar-emoji">' + (roundResult.avatar || "🦊") + "</span>";
     }
@@ -328,14 +336,45 @@
 
   function render() {
     paintRoundResult();
-    readerLabel.textContent = names.length ? names[state.reader] + " is reading" : "Set up the game";
+    if (turnBanner) turnBanner.hidden = !names.length;
+    if (names.length) {
+      readerLabel.textContent = names[state.reader];
+      if (turnAvatar) turnAvatar.textContent = avatars[state.reader] || AVATARS[state.reader % AVATARS.length];
+      if (turnKicker) turnKicker.textContent = state.winner ? "Winner" : "Now reading";
+      if (turnHint) {
+        turnHint.textContent = state.winner
+          ? names[state.winner.index] + " just took the game."
+          : !state.questionVisible
+            ? "Tap Show Question when you're ready."
+            : state.multipleChoice && !state.answerVisible
+              ? "Table's stumped. Pick a letter."
+              : state.answerVisible
+                ? "Mark who scored, then keep going."
+                : "Everyone else slaps in after the question is read.";
+      }
+    } else {
+      readerLabel.textContent = "Set up the game";
+    }
+    if (nextReaderBtn && names.length) {
+      const nxt = names[(state.reader + 1) % names.length];
+      nextReaderBtn.innerHTML = 'Next reader<span class="btn-sub">' + nxt + "'s turn</span>";
+    }
+    showQuestion.classList.toggle("primary", !state.questionVisible);
+    showAnswer.classList.toggle("primary", !!(state.questionVisible && !state.answerVisible));
     renderQuestion();
     players.innerHTML = "";
     names.forEach((name, i) => {
-      const eligible = i !== state.reader && !state.winner;
+      const isReader = i === state.reader;
+      const eligible = !isReader && !state.winner;
       const nextPenalty = state.misses[i] + 1;
       const card = document.createElement("section");
-      card.className = "card" + (i === state.reader ? " reading" : "");
+      card.className = "card" + (isReader ? " reading" : "");
+      if (isReader) {
+        const pill = document.createElement("div");
+        pill.className = "reading-pill";
+        pill.textContent = "Reading";
+        card.append(pill);
+      }
       const avatarBtn = document.createElement("button");
       avatarBtn.type = "button";
       avatarBtn.className = "avatar-btn";
@@ -354,23 +393,31 @@
       sc.textContent = state.scores[i];
       const mi = document.createElement("div");
       mi.className = "miss";
-      mi.textContent = state.misses[i] + " wrong • next miss -" + nextPenalty;
-      const buttons = document.createElement("div");
-      buttons.className = "buttons";
-      const good = document.createElement("button");
-      good.type = "button";
-      good.className = "correct" + (eligible ? "" : " disabled");
-      good.textContent = "+1 Correct";
-      good.disabled = !eligible;
-      good.addEventListener("click", () => correct(i));
-      const bad = document.createElement("button");
-      bad.type = "button";
-      bad.className = "wrong" + (eligible ? "" : " disabled");
-      bad.textContent = "Wrong  -" + nextPenalty;
-      bad.disabled = !eligible;
-      bad.addEventListener("click", () => wrong(i));
-      buttons.append(good, bad);
-      card.append(avatarBtn, nm, sc, mi, buttons);
+      mi.textContent = state.misses[i] + " wrong" + (isReader ? "" : " · next miss −" + nextPenalty);
+      card.append(avatarBtn, nm, sc, mi);
+      if (isReader) {
+        const note = document.createElement("div");
+        note.className = "seat-note";
+        note.textContent = "Sit this one out. You're reading.";
+        card.append(note);
+      } else {
+        const buttons = document.createElement("div");
+        buttons.className = "buttons";
+        const good = document.createElement("button");
+        good.type = "button";
+        good.className = "correct" + (eligible ? "" : " disabled");
+        good.innerHTML = 'Correct<span class="btn-sub">+1 point</span>';
+        good.disabled = !eligible;
+        good.addEventListener("click", () => correct(i));
+        const bad = document.createElement("button");
+        bad.type = "button";
+        bad.className = "wrong" + (eligible ? "" : " disabled");
+        bad.innerHTML = 'Wrong<span class="btn-sub">−' + nextPenalty + " this miss</span>";
+        bad.disabled = !eligible;
+        bad.addEventListener("click", () => wrong(i));
+        buttons.append(good, bad);
+        card.append(buttons);
+      }
       players.append(card);
     });
     if (state.winner) {

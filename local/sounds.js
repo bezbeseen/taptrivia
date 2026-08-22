@@ -50,7 +50,8 @@ var Slap15Sounds = (() => {
     question: 0,
     answer: 0,
     continue: 0,
-    mc: 0
+    mc: 0,
+    fart: 0
   };
   function audio() {
     if (typeof window === "undefined") return null;
@@ -99,13 +100,20 @@ var Slap15Sounds = (() => {
     osc.start(now);
     osc.stop(now + dur + 0.02);
   }
-  function noiseBurst(ac, at, dur, gain, freq = 1200, type = "lowpass") {
+  function brownNoise(ac, dur) {
     const frames = Math.max(1, Math.floor(ac.sampleRate * dur));
     const buffer = ac.createBuffer(1, frames, ac.sampleRate);
     const data = buffer.getChannelData(0);
-    for (let i = 0; i < frames; i++) data[i] = Math.random() * 2 - 1;
+    let last = 0;
+    for (let i = 0; i < frames; i++) {
+      last = last * 0.93 + (Math.random() * 2 - 1) * 0.07;
+      data[i] = last * 3.2;
+    }
+    return buffer;
+  }
+  function noiseBurst(ac, at, dur, gain, freq = 1200, type = "lowpass") {
     const src = ac.createBufferSource();
-    src.buffer = buffer;
+    src.buffer = brownNoise(ac, dur);
     const filter = ac.createBiquadFilter();
     filter.type = type;
     filter.frequency.value = freq;
@@ -115,6 +123,28 @@ var Slap15Sounds = (() => {
     filter.connect(amp);
     amp.connect(ac.destination);
     src.start(ac.currentTime + at);
+  }
+  function noiseSweep(ac, {
+    at = 0,
+    dur,
+    gain,
+    startFreq,
+    endFreq,
+    q = 5
+  }) {
+    const now = ac.currentTime + at;
+    const src = ac.createBufferSource();
+    src.buffer = brownNoise(ac, dur);
+    const filter = ac.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.Q.value = q;
+    filter.frequency.setValueAtTime(startFreq, now);
+    filter.frequency.exponentialRampToValueAtTime(Math.max(endFreq, 28), now + dur);
+    const amp = envGain(ac, now, gain, dur);
+    src.connect(filter);
+    filter.connect(amp);
+    amp.connect(ac.destination);
+    src.start(now);
   }
   function chord(ac, freqs, at, dur, gain, type = "square") {
     freqs.forEach((freq) => tone(ac, { type, freq, at, dur, gain: gain / freqs.length }));
@@ -127,19 +157,6 @@ var Slap15Sounds = (() => {
   function duck(ac) {
     tone(ac, { type: "square", freq: 420, endFreq: 180, dur: 0.14, gain: 0.14 });
     tone(ac, { type: "square", freq: 380, endFreq: 140, at: 0.12, dur: 0.16, gain: 0.12 });
-  }
-  function sadTrombone(ac) {
-    [349, 330, 294, 220].forEach((freq, i) => {
-      tone(ac, { type: "sawtooth", freq, endFreq: freq - 30, at: i * 0.22, dur: 0.28, gain: 0.12 });
-    });
-  }
-  function recordScratch(ac) {
-    noiseBurst(ac, 0, 0.18, 0.18, 2400);
-    tone(ac, { type: "sawtooth", freq: 900, endFreq: 90, dur: 0.22, gain: 0.1 });
-  }
-  function splat(ac) {
-    noiseBurst(ac, 0, 0.2, 0.2, 500);
-    tone(ac, { type: "triangle", freq: 90, endFreq: 40, dur: 0.28, gain: 0.18 });
   }
   function kazooFanfare(ac) {
     [523, 659, 784, 1046].forEach((freq, i) => {
@@ -177,18 +194,60 @@ var Slap15Sounds = (() => {
     tone(ac, { type: "sawtooth", freq: 300, endFreq: 140, at: 0.28, dur: 0.4, gain: 0.11 });
   }
   function raspberry(ac) {
-    noiseBurst(ac, 0, 0.32, 0.16, 420);
-    tone(ac, { type: "sawtooth", freq: 70, endFreq: 55, dur: 0.32, gain: 0.14 });
-    tone(ac, { type: "square", freq: 90, endFreq: 60, dur: 0.28, gain: 0.08 });
+    noiseSweep(ac, { dur: 0.34, gain: 0.2, startFreq: 260, endFreq: 70, q: 3 });
+    tone(ac, { type: "sawtooth", freq: 70, endFreq: 48, dur: 0.32, gain: 0.14 });
+    tone(ac, { type: "square", freq: 90, endFreq: 55, dur: 0.28, gain: 0.08 });
+  }
+  function wetFart(ac) {
+    noiseSweep(ac, { dur: 0.5, gain: 0.24, startFreq: 190, endFreq: 48 });
+    noiseSweep(ac, { at: 0.1, dur: 0.28, gain: 0.14, startFreq: 140, endFreq: 60, q: 8 });
+    tone(ac, { type: "sine", freq: 58, endFreq: 36, dur: 0.48, gain: 0.2 });
+    tone(ac, { type: "sawtooth", freq: 82, endFreq: 44, dur: 0.4, gain: 0.07 });
+  }
+  function tootFart(ac) {
+    tone(ac, { type: "square", freq: 98, endFreq: 68, dur: 0.13, gain: 0.17 });
+    noiseSweep(ac, { dur: 0.16, gain: 0.18, startFreq: 240, endFreq: 70 });
+    tone(ac, { type: "sine", freq: 72, endFreq: 46, at: 0.1, dur: 0.18, gain: 0.16 });
+  }
+  function longFart(ac) {
+    noiseSweep(ac, { dur: 0.78, gain: 0.22, startFreq: 170, endFreq: 34, q: 4 });
+    tone(ac, { type: "sine", freq: 52, endFreq: 28, dur: 0.78, gain: 0.18 });
+    tone(ac, { type: "sawtooth", freq: 88, endFreq: 38, dur: 0.6, gain: 0.07 });
+  }
+  function squeakyFart(ac) {
+    tone(ac, { type: "square", freq: 260, endFreq: 70, dur: 0.3, gain: 0.12 });
+    noiseSweep(ac, { at: 0.04, dur: 0.34, gain: 0.2, startFreq: 420, endFreq: 55, q: 6 });
+    tone(ac, { type: "sine", freq: 96, endFreq: 40, at: 0.12, dur: 0.3, gain: 0.15 });
+  }
+  function doubleToot(ac) {
+    tootFart(ac);
+    tone(ac, { type: "square", freq: 84, endFreq: 52, at: 0.24, dur: 0.18, gain: 0.17 });
+    noiseSweep(ac, { at: 0.24, dur: 0.2, gain: 0.16, startFreq: 200, endFreq: 48 });
+    tone(ac, { type: "sine", freq: 64, endFreq: 38, at: 0.28, dur: 0.18, gain: 0.14 });
+  }
+  function rippleFart(ac) {
+    [0, 0.1, 0.2, 0.34].forEach((at, i) => {
+      noiseSweep(ac, {
+        at,
+        dur: 0.13,
+        gain: 0.16 - i * 0.02,
+        startFreq: 210 - i * 28,
+        endFreq: 58
+      });
+      tone(ac, {
+        type: "sine",
+        freq: 86 - i * 8,
+        endFreq: 42,
+        at,
+        dur: 0.13,
+        gain: 0.11
+      });
+    });
   }
   function goat(ac) {
     tone(ac, { type: "sawtooth", freq: 320, endFreq: 420, dur: 0.12, gain: 0.12 });
     tone(ac, { type: "sawtooth", freq: 400, endFreq: 260, at: 0.1, dur: 0.16, gain: 0.12 });
     tone(ac, { type: "square", freq: 280, endFreq: 180, at: 0.22, dur: 0.18, gain: 0.1 });
-  }
-  function catYowl(ac) {
-    tone(ac, { type: "sawtooth", freq: 820, endFreq: 240, dur: 0.42, gain: 0.11 });
-    tone(ac, { type: "triangle", freq: 940, endFreq: 200, dur: 0.42, gain: 0.06 });
   }
   function partyHorn(ac) {
     tone(ac, { type: "sawtooth", freq: 400, endFreq: 880, dur: 0.45, gain: 0.1 });
@@ -241,26 +300,6 @@ var Slap15Sounds = (() => {
     tone(ac, { type: "square", freq: 146, dur: 0.28, gain: 0.1 });
     noiseBurst(ac, 0, 0.28, 0.06, 800);
   }
-  function glassBreak(ac) {
-    noiseBurst(ac, 0, 0.12, 0.18, 4e3, "highpass");
-    [1800, 2400, 3100, 1500].forEach((freq, i) => {
-      tone(ac, { type: "triangle", freq, endFreq: freq * 0.4, at: i * 0.03, dur: 0.18, gain: 0.06 });
-    });
-  }
-  function wilhelmLite(ac) {
-    noiseBurst(ac, 0, 0.35, 0.14, 1600, "bandpass");
-    tone(ac, { type: "sawtooth", freq: 700, endFreq: 180, dur: 0.4, gain: 0.12 });
-    tone(ac, { type: "square", freq: 900, endFreq: 140, dur: 0.38, gain: 0.06 });
-  }
-  function failPiano(ac) {
-    [392, 349, 311, 247, 196].forEach((freq, i) => {
-      tone(ac, { type: "triangle", freq, at: i * 0.11, dur: 0.2, gain: 0.11 });
-    });
-  }
-  function bikeHorn(ac) {
-    tone(ac, { type: "square", freq: 430, dur: 0.12, gain: 0.14 });
-    tone(ac, { type: "square", freq: 340, at: 0.14, dur: 0.22, gain: 0.14 });
-  }
   function cuckoo(ac) {
     tone(ac, { type: "triangle", freq: 659, dur: 0.14, gain: 0.12 });
     tone(ac, { type: "triangle", freq: 523, at: 0.16, dur: 0.18, gain: 0.12 });
@@ -268,11 +307,6 @@ var Slap15Sounds = (() => {
   function hiccup(ac) {
     tone(ac, { type: "sine", freq: 240, endFreq: 420, dur: 0.08, gain: 0.14 });
     tone(ac, { type: "sine", freq: 200, endFreq: 360, at: 0.16, dur: 0.09, gain: 0.12 });
-  }
-  function sneeze(ac) {
-    noiseBurst(ac, 0, 0.08, 0.08, 900);
-    noiseBurst(ac, 0.12, 0.18, 0.2, 2200);
-    tone(ac, { type: "triangle", freq: 180, endFreq: 70, at: 0.12, dur: 0.2, gain: 0.1 });
   }
   function whipCrack(ac) {
     tone(ac, { type: "sawtooth", freq: 1400, endFreq: 180, dur: 0.08, gain: 0.1 });
@@ -351,10 +385,6 @@ var Slap15Sounds = (() => {
     tone(ac, { type: "sine", freq: 300, endFreq: 720, dur: 0.28, gain: 0.1 });
     tone(ac, { type: "sine", freq: 720, endFreq: 240, at: 0.26, dur: 0.32, gain: 0.1 });
   }
-  function bonk(ac) {
-    tone(ac, { type: "triangle", freq: 140, endFreq: 70, dur: 0.16, gain: 0.18 });
-    noiseBurst(ac, 0, 0.05, 0.1, 600);
-  }
   function rimshot(ac) {
     noiseBurst(ac, 0, 0.05, 0.16, 4e3, "highpass");
     tone(ac, { type: "sine", freq: 180, endFreq: 80, dur: 0.12, gain: 0.16 });
@@ -378,26 +408,15 @@ var Slap15Sounds = (() => {
     sparkle,
     taDa
   ];
-  var WRONG = [
-    honk,
-    duck,
-    sadTrombone,
-    recordScratch,
-    splat,
-    raspberry,
-    goat,
-    catYowl,
-    buzzer,
-    glassBreak,
-    wilhelmLite,
-    failPiano,
-    bikeHorn,
-    slideWhistleDown,
-    sneeze,
-    bonk,
-    klaxon
+  var FARTS = [
+    wetFart,
+    tootFart,
+    longFart,
+    squeakyFart,
+    doubleToot,
+    rippleFart,
+    raspberry
   ];
-  var NOPE = [duck, bikeHorn, bonk, hiccup, cuckoo, whipCrack, rimshot];
   var TAPS = [pop, blip, cowbell, boing, laserPew];
   var AVATARS = [boing, duck, hiccup, sparkle, goat, bubblePop, cartoonZip];
   var QUESTIONS = [whoosh, whipCrack, cartoonZip, drumroll, rimshot];
@@ -411,10 +430,10 @@ var Slap15Sounds = (() => {
     cycle(CORRECT, "correct");
   }
   function playWrongSound() {
-    cycle(WRONG, "wrong");
+    cycle(FARTS, "fart");
   }
   function playNopeSound() {
-    cycle(NOPE, "nope");
+    cycle(FARTS, "fart");
   }
   function playMultipleChoiceSound() {
     cycle(MCS, "mc");

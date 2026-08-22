@@ -470,6 +470,10 @@ export function useSlapTrivia() {
   }, [activeLevel, setup, winTarget]);
 
   const readerName = names[state.reader] ?? "";
+  const nextReaderName = names.length
+    ? (names[(state.reader + 1) % names.length] ?? "")
+    : "";
+  const readerAvatar = avatars[state.reader] ?? 0;
 
   return {
     setup,
@@ -500,6 +504,8 @@ export function useSlapTrivia() {
     loading,
     subtitle,
     readerName,
+    nextReaderName,
+    readerAvatar,
     historyLength: history.length,
     levels: LEVELS,
     startGame,
