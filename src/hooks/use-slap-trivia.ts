@@ -102,6 +102,7 @@ export function useSlapTrivia() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [roundResult, setRoundResult] = useState<RoundResult | null>(null);
+  const [tableSlapOpen, setTableSlapOpen] = useState(false);
 
   const questionIndex = activeLevel ? indexes[activeLevel] : 0;
   const currentQuestion = pool[questionIndex] ?? null;
@@ -212,6 +213,7 @@ export function useSlapTrivia() {
       setSetup(false);
       setConfirmOpen(false);
       setRoundResult(null);
+      setTableSlapOpen(false);
       playStartSound();
       setStatus(`${nextNames[0]} reads first.`);
     } catch (error) {
@@ -409,6 +411,9 @@ export function useSlapTrivia() {
       setStatus(
         `${names[state.reader] ?? "The reader"} reads. Press Show Question.`
       );
+      if (names.length >= 2) {
+        setTableSlapOpen(true);
+      }
       return;
     }
     if (result.kind === "wrong" && result.allStumped) {
@@ -439,6 +444,7 @@ export function useSlapTrivia() {
     const parsed = JSON.parse(previous) as GameState;
     const count = parsed.scores?.length ?? names.length;
     setRoundResult(null);
+    setTableSlapOpen(false);
     setState({
       ...emptyState(count),
       ...parsed,
@@ -456,6 +462,7 @@ export function useSlapTrivia() {
     setState(emptyState());
     setConfirmOpen(false);
     setRoundResult(null);
+    setTableSlapOpen(false);
     setActiveLevel(null);
     setPool([]);
     setNames([]);
@@ -463,6 +470,10 @@ export function useSlapTrivia() {
     setSetup(true);
     setStatus("New game. Question progress is preserved by level.");
   };
+
+  const endTableSlap = useCallback(() => {
+    setTableSlapOpen(false);
+  }, []);
 
   const subtitle = useMemo(() => {
     if (setup || !activeLevel) return "Trivia showdown";
@@ -519,6 +530,8 @@ export function useSlapTrivia() {
     markWrong,
     roundResult,
     dismissRoundResult,
+    tableSlapOpen,
+    endTableSlap,
     nextReader,
     undo,
     resetGame,

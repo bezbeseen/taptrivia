@@ -2,6 +2,7 @@
 
 import { useSlapTrivia } from "@/hooks/use-slap-trivia";
 import { PlayerAvatar } from "@/components/player-avatar";
+import { TableSlap } from "@/components/table-slap";
 import { levelLabel } from "@/lib/questions";
 import { playUiTap } from "@/lib/sounds";
 import "@/app/slap15.css";
@@ -21,6 +22,18 @@ export function Slap15App() {
           : "Everyone else slaps in after the question is read.";
 
   const turnKicker = game.state.winner ? "Winner" : "Now reading";
+
+  if (game.tableSlapOpen) {
+    return (
+      <TableSlap
+        players={game.names.map((name, index) => ({
+          name,
+          avatar: game.avatars[index] ?? index,
+        }))}
+        onDone={game.endTableSlap}
+      />
+    );
+  }
 
   if (result) {
     const tone =
@@ -127,6 +140,11 @@ export function Slap15App() {
                 competitor misses — and the question becomes multiple choice.
               </li>
               <li>First player to reach the winning net points wins.</li>
+              <li>
+                After a correct answer, Table Slap pops up: put the tablet in
+                the middle, wait for SLAP!, first pad wins bragging rights.
+                It does not change the score. Skip it anytime.
+              </li>
               <li>Questions continue forward even after Reset Game.</li>
             </ul>
             <button
