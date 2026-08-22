@@ -9,12 +9,20 @@ import {
 } from "@/lib/question-progress";
 import {
   LEVELS,
+  buildMultipleChoices,
   levelLabel,
   loadQuestionBanks,
   type Level,
   type TriviaQuestion,
 } from "@/lib/questions";
-import { playCorrectSound, playWrongSound, ringAlarm } from "@/lib/sounds";
+import {
+  playCorrectSound,
+  playMultipleChoiceSound,
+  playNopeSound,
+  playWrongSound,
+  ringAlarm,
+} from "@/lib/sounds";
+import { AVATARS } from "@/components/player-avatar";
 
 export type GameState = {
   scores: number[];
@@ -23,6 +31,9 @@ export type GameState = {
   winner: { index: number } | null;
   questionVisible: boolean;
   answerVisible: boolean;
+  multipleChoice: boolean;
+  missedThisQuestion: boolean[];
+  eliminatedChoices: number[];
 };
 
 const DEFAULT_NAMES = ["Bez", "Sean", "Marc"];
@@ -35,6 +46,9 @@ function emptyState(count = 0): GameState {
     winner: null,
     questionVisible: false,
     answerVisible: false,
+    multipleChoice: false,
+    missedThisQuestion: Array(count).fill(false),
+    eliminatedChoices: [],
   };
 }
 
@@ -48,7 +62,11 @@ export function useSlapTrivia() {
   const [draftNames, setDraftNames] = useState(() =>
     Array.from({ length: 8 }, (_, i) => DEFAULT_NAMES[i] ?? "")
   );
+  const [draftAvatars, setDraftAvatars] = useState(() =>
+    Array.from({ length: 8 }, (_, i) => i % AVATARS.length)
+  );
   const [names, setNames] = useState<string[]>([]);
+  const [avatars, setAvatars] = useState<number[]>([]);
   const [activeLevel, setActiveLevel] = useState<Level | null>(null);
   const [pool, setPool] = useState<TriviaQuestion[]>([]);
   const [indexes, setIndexes] = useState<QuestionIndexes>(EMPTY_INDEXES);
@@ -76,11 +94,30 @@ export function useSlapTrivia() {
     setDraftNames((prev) => prev.map((name, i) => (i === index ? value : name)));
   };
 
+  const cycleDraftAvatar = (index: number) => {
+    setDraftAvatars((prev) =>
+      prev.map((avatar, i) => (i === index ? (avatar + 1) % AVATARS.length : avatar))
+    );
+  };
+
+  const cycleAvatar = (index: number) => {
+    setAvatars((prev) =>
+      prev.map((avatar, i) => (i === index ? (avatar + 1) % AVATARS.length : avatar))
+    );
+  };
+
   const advanceQuestion = useCallback(
     (from: GameState, nextIndexes: QuestionIndexes) => {
       if (!activeLevel) {
         return {
-          nextState: { ...from, questionVisible: false, answerVisible: false },
+          nextState: {
+            ...from,
+            questionVisible: false,
+            answerVisible: false,
+            multipleChoice: false,
+            missedThisQuestion: Array(from.scores.length).fill(false),
+            eliminatedChoices: [],
+          },
           nextIndexes,
         };
       }
@@ -90,7 +127,14 @@ export function useSlapTrivia() {
       }
       saveQuestionIndexes(updated);
       return {
-        nextState: { ...from, questionVisible: false, answerVisible: false },
+        nextState: {
+          ...from,
+          questionVisible: false,
+          answerVisible: false,
+          multipleChoice: false,
+          missedThisQuestion: Array(from.scores.length).fill(false),
+          eliminatedChoices: [],
+        },
         nextIndexes: updated,
       };
     },
@@ -118,6 +162,7 @@ export function useSlapTrivia() {
       const startIndex = Math.min(stored[level] || 0, Math.max(nextPool.length - 1, 0));
       setIndexes({ ...stored, [level]: startIndex });
       setNames(nextNames);
+      setAvatars(draftAvatars.slice(0, count));
       setWinTarget(target);
       setActiveLevel(level);
       setPool(nextPool);
@@ -141,17 +186,64 @@ export function useSlapTrivia() {
       setConfirmOpen(true);
       return;
     }
-    setState((prev) => ({ ...prev, questionVisible: true, answerVisible: false }));
+    setState((prev) => ({
+      ...prev,
+      questionVisible: true,
+      answerVisible: false,
+      multipleChoice: false,
+      eliminatedChoices: [],
+    }));
   };
 
   const confirmShowQuestion = () => {
     setConfirmOpen(false);
-    setState((prev) => ({ ...prev, questionVisible: true, answerVisible: false }));
+    setState((prev) => ({
+      ...prev,
+      questionVisible: true,
+      answerVisible: false,
+      multipleChoice: false,
+      eliminatedChoices: [],
+    }));
   };
 
   const showAnswer = () => {
     if (!currentQuestion || !state.questionVisible) return;
     setState((prev) => ({ ...prev, answerVisible: true }));
+  };
+
+  const enableMultipleChoice = () => {
+    if (!currentQuestion || !state.questionVisible || state.winner) return;
+    if (state.multipleChoice) return;
+    playMultipleChoiceSound();
+    setState((prev) => ({ ...prev, multipleChoice: true }));
+    setStatus("Nobody knows? Four choices. Slap in, then pick one.");
+  };
+
+  const choices = useMemo(() => {
+    if (!currentQuestion || !state.multipleChoice) return [];
+    return buildMultipleChoices(currentQuestion, pool);
+  }, [currentQuestion, pool, state.multipleChoice]);
+
+  const pickChoice = (choiceIndex: number) => {
+    if (!state.multipleChoice || state.winner || state.answerVisible) return;
+    const choice = choices[choiceIndex];
+    if (!choice || state.eliminatedChoices.includes(choiceIndex)) return;
+    if (choice.correct) {
+      playCorrectSound();
+      setState((prev) => ({
+        ...prev,
+        answerVisible: true,
+        eliminatedChoices: prev.eliminatedChoices,
+      }));
+      setStatus("That's the one. Mark who got it.");
+      return;
+    }
+    playNopeSound();
+    setState((prev) => ({
+      ...prev,
+      eliminatedChoices: [...prev.eliminatedChoices, choiceIndex],
+    }));
+    setStatus("Nope. Cross that one out and try another.");
   };
 
   const markCorrect = (index: number) => {
@@ -178,10 +270,29 @@ export function useSlapTrivia() {
     playWrongSound();
     const misses = [...state.misses];
     const scores = [...state.scores];
+    const missedThisQuestion = [...state.missedThisQuestion];
     misses[index] = (misses[index] ?? 0) + 1;
+    missedThisQuestion[index] = true;
     const penalty = misses[index] ?? 1;
     scores[index] = (scores[index] ?? 0) - penalty;
-    setState({ ...state, misses, scores });
+    const competitors = names.map((_, i) => i).filter((i) => i !== state.reader);
+    const allStumped =
+      competitors.length > 0 && competitors.every((i) => missedThisQuestion[i]);
+    const next: GameState = {
+      ...state,
+      misses,
+      scores,
+      missedThisQuestion,
+      multipleChoice: state.multipleChoice || allStumped,
+    };
+    setState(next);
+    if (allStumped && !state.multipleChoice) {
+      playMultipleChoiceSound();
+      setStatus(
+        `${names[index]} was wrong: -${penalty}. Table's stumped — multiple choice is up.`
+      );
+      return;
+    }
     setStatus(
       `${names[index]} was wrong: -${penalty}. Any other non-reader may answer next.`
     );
@@ -203,7 +314,15 @@ export function useSlapTrivia() {
     const previous = history[history.length - 1];
     if (!previous) return;
     setHistory((prev) => prev.slice(0, -1));
-    setState(JSON.parse(previous) as GameState);
+    const parsed = JSON.parse(previous) as GameState;
+    const count = parsed.scores?.length ?? names.length;
+    setState({
+      ...emptyState(count),
+      ...parsed,
+      missedThisQuestion: parsed.missedThisQuestion ?? Array(count).fill(false),
+      eliminatedChoices: parsed.eliminatedChoices ?? [],
+      multipleChoice: parsed.multipleChoice ?? false,
+    });
     setConfirmOpen(false);
     setStatus("Last scoring action undone. Question position is unchanged.");
   };
@@ -215,6 +334,7 @@ export function useSlapTrivia() {
     setActiveLevel(null);
     setPool([]);
     setNames([]);
+    setAvatars([]);
     setSetup(true);
     setStatus("New game. Question progress is preserved by level.");
   };
@@ -240,7 +360,11 @@ export function useSlapTrivia() {
     setWinTarget,
     draftNames,
     setDraftName,
+    draftAvatars,
+    cycleDraftAvatar,
     names,
+    avatars,
+    cycleAvatar,
     activeLevel,
     currentQuestion,
     questionIndex,
@@ -257,6 +381,9 @@ export function useSlapTrivia() {
     showQuestion,
     confirmShowQuestion,
     showAnswer,
+    enableMultipleChoice,
+    choices,
+    pickChoice,
     markCorrect,
     markWrong,
     nextReader,

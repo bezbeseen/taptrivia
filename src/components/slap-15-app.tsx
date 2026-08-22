@@ -1,6 +1,7 @@
 "use client";
 
 import { useSlapTrivia } from "@/hooks/use-slap-trivia";
+import { PlayerAvatar } from "@/components/player-avatar";
 import { levelLabel } from "@/lib/questions";
 import "@/app/slap15.css";
 
@@ -44,6 +45,10 @@ export function Slap15App() {
               <li>
                 After a wrong first answer, another player gets one chance
                 without slapping.
+              </li>
+              <li>
+                If nobody knows, hit Nobody knows — or wait until every
+                competitor misses — and the question becomes multiple choice.
               </li>
               <li>First player to reach the winning net points wins.</li>
               <li>Questions continue forward even after Reset Game.</li>
@@ -115,20 +120,31 @@ export function Slap15App() {
             </div>
             <div className="name-fields">
               {Array.from({ length: game.playerCount }, (_, index) => (
-                <div className="setup-field" key={index}>
-                  <label htmlFor={`playerName${index}`}>
-                    Player {index + 1} name
-                  </label>
-                  <input
-                    id={`playerName${index}`}
-                    type="text"
-                    maxLength={24}
-                    placeholder={`Player ${index + 1}`}
-                    value={game.draftNames[index] ?? ""}
-                    onChange={(event) =>
-                      game.setDraftName(index, event.target.value)
-                    }
-                  />
+                <div className="setup-field setup-player" key={index}>
+                  <button
+                    type="button"
+                    className="avatar-pick"
+                    onClick={() => game.cycleDraftAvatar(index)}
+                    title="Tap to change avatar"
+                  >
+                    <PlayerAvatar id={game.draftAvatars[index] ?? index} size={56} />
+                    <span>Tap to change</span>
+                  </button>
+                  <div>
+                    <label htmlFor={`playerName${index}`}>
+                      Player {index + 1} name
+                    </label>
+                    <input
+                      id={`playerName${index}`}
+                      type="text"
+                      maxLength={24}
+                      placeholder={`Player ${index + 1}`}
+                      value={game.draftNames[index] ?? ""}
+                      onChange={(event) =>
+                        game.setDraftName(index, event.target.value)
+                      }
+                    />
+                  </div>
                 </div>
               ))}
             </div>
@@ -156,6 +172,29 @@ export function Slap15App() {
             {game.state.answerVisible && game.currentQuestion ? (
               <div className="answer">{game.currentQuestion.answer}</div>
             ) : null}
+            {game.state.questionVisible &&
+            game.state.multipleChoice &&
+            !game.state.answerVisible ? (
+              <div className="choices">
+                {game.choices.map((choice, index) => {
+                  const out = game.state.eliminatedChoices.includes(index);
+                  return (
+                    <button
+                      key={`${choice.text}-${index}`}
+                      type="button"
+                      className={out ? "choice out" : "choice"}
+                      disabled={out || !!game.state.winner}
+                      onClick={() => game.pickChoice(index)}
+                    >
+                      <span className="choice-letter">
+                        {String.fromCharCode(65 + index)}
+                      </span>
+                      {choice.text}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null}
             <div className="qbuttons">
               <button
                 type="button"
@@ -174,6 +213,19 @@ export function Slap15App() {
                 }
               >
                 Show Answer
+              </button>
+              <button
+                type="button"
+                onClick={game.enableMultipleChoice}
+                disabled={
+                  !game.state.questionVisible ||
+                  game.state.multipleChoice ||
+                  game.state.answerVisible ||
+                  !!game.state.winner ||
+                  !game.currentQuestion
+                }
+              >
+                Nobody knows
               </button>
             </div>
           </section>
@@ -222,6 +274,18 @@ export function Slap15App() {
                 key={`${name}-${index}`}
                 className={index === game.state.reader ? "card reading" : "card"}
               >
+                <button
+                  type="button"
+                  className="avatar-btn"
+                  onClick={() => game.cycleAvatar(index)}
+                  title="Tap to change avatar"
+                >
+                  <PlayerAvatar
+                    id={game.avatars[index] ?? index}
+                    size={72}
+                    title={name}
+                  />
+                </button>
                 <div className="name">{name}</div>
                 <div className="score">{game.state.scores[index] ?? 0}</div>
                 <div className="miss">
@@ -284,7 +348,8 @@ export function Slap15App() {
         <div className="rules">
           Correct answer: +1. Wrong answers escalate separately for each player:
           first miss -1, second miss -2, third miss -3, and so on. The reader
-          cannot answer their own question.
+          cannot answer their own question. If nobody knows, it becomes multiple
+          choice.
         </div>
       </div>
     </div>

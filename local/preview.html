@@ -10,7 +10,7 @@
 (async()=>{
   try{
     let app=await fetch('app.html?'+Date.now()).then(r=>{if(!r.ok)throw new Error('Could not load app shell.');return r.text()});
-    const scripts=`\n<script src="questions-data-1.js"><\/script>\n<script src="questions-data-2.js"><\/script>\n<script src="questions-data-3.js"><\/script>\n<script src="questions-data-4.js"><\/script>\n<script src="questions-data-5.js"><\/script>\n<script src="questions-data-6.js"><\/script>\n<script src="questions-loader.js"><\/script>\n`;
+    const scripts=`\n<script src="questions-data-1.js"><\/script>\n<script src="questions-data-2.js"><\/script>\n<script src="questions-data-3.js"><\/script>\n<script src="questions-data-4.js"><\/script>\n<script src="questions-data-5.js"><\/script>\n<script src="questions-data-6.js"><\/script>\n<script src="questions-loader.js"><\/script>\n<script src="game.js"><\/script>\n`;
     app=app.replace(/<\/div>\s*$/i,scripts+'</div>');
     document.open();
     document.write(app);

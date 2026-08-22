@@ -26,7 +26,7 @@ type SourceQuestion = {
   answer?: string;
 };
 
-function seededShuffle<T>(items: T[], seed: number): T[] {
+export function seededShuffle<T>(items: T[], seed: number): T[] {
   const arr = items.slice();
   let s = seed >>> 0;
   const rnd = () => {
@@ -127,4 +127,46 @@ export function loadQuestionBanks(): QuestionBanks {
   ).map((q, i) => ({ ...q, difficulty: "mix" as const, order: i + 1 }));
   cache = { easy, medium, hard, smart, mix };
   return cache;
+}
+
+function hashSeed(text: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+export type MultipleChoice = {
+  text: string;
+  correct: boolean;
+};
+
+export function buildMultipleChoices(
+  question: TriviaQuestion,
+  pool: TriviaQuestion[],
+  count = 4
+): MultipleChoice[] {
+  const correct = question.answer.trim();
+  const seen = new Set([correct.toLowerCase()]);
+  const distractors: string[] = [];
+  const shuffled = seededShuffle(pool, hashSeed(question.question + question.order));
+  for (const item of shuffled) {
+    const answer = item.answer.trim();
+    const key = answer.toLowerCase();
+    if (seen.has(key) || !answer) continue;
+    seen.add(key);
+    distractors.push(answer);
+    if (distractors.length >= count - 1) break;
+  }
+  const fallback = ["Red herring", "Nobody knows", "Skip this", "A wild guess"];
+  while (distractors.length < count - 1) {
+    const extra = fallback[distractors.length] ?? `Option ${distractors.length + 2}`;
+    if (!seen.has(extra.toLowerCase())) distractors.push(extra);
+  }
+  return seededShuffle(
+    [{ text: correct, correct: true }, ...distractors.map((text) => ({ text, correct: false }))],
+    hashSeed(question.answer + "mc")
+  );
 }
