@@ -1,16 +1,9 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { FIGHTERS, MAX_STRIKES, TOTAL_ROUNDS } from "@/lib/fighters";
+import { useState } from "react";
+import { ActionButton } from "@/components/action-button";
 import { Badge } from "@/components/ui/badge";
+import { FIGHTERS, MAX_STRIKES, TOTAL_ROUNDS } from "@/lib/fighters";
 
 type MenuScreenProps = {
   onStart: () => void;
@@ -25,8 +18,10 @@ export function MenuScreen({
   bestScore,
   recordsReady,
 }: MenuScreenProps) {
+  const [rulesOpen, setRulesOpen] = useState(false);
+
   return (
-    <div className="mx-auto flex w-full max-w-xl flex-1 flex-col justify-between gap-8 px-4 py-8 sm:py-12">
+    <div className="relative z-10 mx-auto flex w-full max-w-xl flex-1 flex-col justify-between gap-8 px-4 py-8 sm:py-12">
       <header className="space-y-4 text-center">
         <p className="text-[0.7rem] tracking-[0.42em] text-amber-200/70 uppercase">
           Saturday night card
@@ -55,62 +50,58 @@ export function MenuScreen({
       </div>
 
       <div className="flex flex-col gap-3">
-        <Button
+        <ActionButton
           onClick={onStart}
           className="h-14 rounded-2xl bg-amber-400 text-base font-semibold tracking-wide text-zinc-950 hover:bg-amber-300"
         >
           Walk the card
-        </Button>
+        </ActionButton>
         <div className="grid grid-cols-2 gap-3">
-          <Button
+          <ActionButton
             variant="outline"
             onClick={onRecords}
             className="h-12 rounded-2xl border-white/12 bg-zinc-950/40"
           >
             Records
-          </Button>
-          <Dialog>
-            <DialogTrigger
-              render={
-                <Button
-                  variant="outline"
-                  className="h-12 rounded-2xl border-white/12 bg-zinc-950/40"
-                />
-              }
-            >
-              How it works
-            </DialogTrigger>
-            <DialogContent className="max-w-md border-white/10 bg-zinc-950 text-zinc-100 sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle className="font-display text-2xl tracking-wide">
-                  The rules of the hand
-                </DialogTitle>
-                <DialogDescription className="text-zinc-400">
-                  A timing arena. No guessing. No flinching.
-                </DialogDescription>
-              </DialogHeader>
-              <ol className="space-y-3 text-sm leading-relaxed text-zinc-300">
-                <li>
-                  <strong className="text-amber-200">Wait.</strong> Each opponent
-                  holds still, then the cue flashes. Space, click, or tap to slap.
-                </li>
-                <li>
-                  <strong className="text-amber-200">Don&apos;t jump.</strong> A
-                  slap before the light is a strike. Later names will twitch to
-                  bait you.
-                </li>
-                <li>
-                  <strong className="text-amber-200">Be first.</strong> Miss the
-                  window and they hit you. Three strikes and the night is over.
-                </li>
-                <li>
-                  <strong className="text-amber-200">Stay sharp.</strong> Perfect
-                  and clean slaps build a combo. Combo multiplies the score.
-                </li>
-              </ol>
-            </DialogContent>
-          </Dialog>
+          </ActionButton>
+          <ActionButton
+            variant="outline"
+            onClick={() => setRulesOpen((open) => !open)}
+            aria-expanded={rulesOpen}
+            className="h-12 rounded-2xl border-white/12 bg-zinc-950/40"
+          >
+            {rulesOpen ? "Hide rules" : "How it works"}
+          </ActionButton>
         </div>
+        {rulesOpen ? (
+          <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4 text-sm text-zinc-300">
+            <p className="font-display text-2xl tracking-wide text-amber-50">
+              The rules of the hand
+            </p>
+            <p className="mt-1 text-zinc-500">
+              A timing arena. No guessing. No flinching.
+            </p>
+            <ol className="mt-4 space-y-3 leading-relaxed">
+              <li>
+                <strong className="text-amber-200">Wait.</strong> Each opponent
+                holds still, then the cue flashes. Space, click, or tap to slap.
+              </li>
+              <li>
+                <strong className="text-amber-200">Don&apos;t jump.</strong> A
+                slap before the light is a strike. Later names will twitch to
+                bait you.
+              </li>
+              <li>
+                <strong className="text-amber-200">Be first.</strong> Miss the
+                window and they hit you. Three strikes and the night is over.
+              </li>
+              <li>
+                <strong className="text-amber-200">Stay sharp.</strong> Perfect
+                and clean slaps build a combo. Combo multiplies the score.
+              </li>
+            </ol>
+          </div>
+        ) : null}
       </div>
 
       <section className="space-y-3">

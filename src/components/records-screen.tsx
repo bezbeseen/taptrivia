@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { ActionButton } from "@/components/action-button";
 import { letterGrade } from "@/lib/game";
 import type { StoredRecords } from "@/lib/storage";
 
@@ -28,13 +28,13 @@ export function RecordsScreen({
             Records
           </h1>
         </div>
-        <Button
+        <ActionButton
           variant="outline"
           onClick={onBack}
           className="rounded-xl border-white/12"
         >
           Back
-        </Button>
+        </ActionButton>
       </header>
 
       {storageError ? (

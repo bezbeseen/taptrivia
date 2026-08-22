@@ -213,8 +213,8 @@ export function useSlapGame() {
     });
   }, [armRound, clearTimers, later]);
 
-  const startNight = useCallback(async () => {
-    await unlockAudio();
+  const startNight = useCallback(() => {
+    void unlockAudio();
     clearTimers();
     lockedRef.current = false;
     roundRef.current = 0;

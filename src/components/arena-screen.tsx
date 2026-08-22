@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { ActionButton } from "@/components/action-button";
 import { Progress } from "@/components/ui/progress";
 import { MAX_STRIKES, TOTAL_ROUNDS, type Fighter } from "@/lib/fighters";
 import type { Grade, Phase } from "@/lib/game";
@@ -142,7 +142,7 @@ export function ArenaScreen({
         ) : null}
       </div>
 
-      <Button
+      <ActionButton
         onClick={onSlap}
         disabled={!canSlap}
         className={cn(
@@ -153,7 +153,7 @@ export function ArenaScreen({
         )}
       >
         {canSlap ? "SLAP" : lastCopy?.label ?? "HOLD"}
-      </Button>
+      </ActionButton>
       <p className="text-center text-xs text-zinc-500">
         Tap the pad, click, or press Space
       </p>

@@ -47,11 +47,10 @@ export function Slap15App() {
   return (
     <div
       className={cn(
-        "flex min-h-dvh flex-col bg-[radial-gradient(circle_at_top,rgba(245,158,11,0.16),transparent_42%),linear-gradient(180deg,#09090b_0%,#18181b_100%)]",
+        "relative z-0 flex min-h-dvh flex-col bg-[radial-gradient(circle_at_top,rgba(245,158,11,0.16),transparent_42%),linear-gradient(180deg,#09090b_0%,#18181b_100%)]",
         game.shake && "arena-shake"
       )}
     >
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-[radial-gradient(ellipse_at_top,rgba(251,191,36,0.18),transparent_70%)]" />
       {game.phase === "menu" ? (
         <MenuScreen
           onStart={game.startNight}

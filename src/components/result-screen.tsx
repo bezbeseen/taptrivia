@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { ActionButton } from "@/components/action-button";
 import { FIGHTERS } from "@/lib/fighters";
 import { GRADE_COPY, letterGrade, type RunSummary } from "@/lib/game";
 
@@ -73,19 +73,19 @@ export function ResultScreen({
       </ul>
 
       <div className="mt-auto flex flex-col gap-3">
-        <Button
+        <ActionButton
           onClick={onAgain}
           className="h-14 rounded-2xl bg-amber-400 text-base font-semibold text-zinc-950 hover:bg-amber-300"
         >
           Walk it again
-        </Button>
-        <Button
+        </ActionButton>
+        <ActionButton
           variant="outline"
           onClick={onMenu}
           className="h-12 rounded-2xl border-white/12"
         >
           Back to the door
-        </Button>
+        </ActionButton>
       </div>
     </div>
   );
