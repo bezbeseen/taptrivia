@@ -46,6 +46,8 @@
   const nameFields = root.querySelector("#nameFields");
   const startGame = root.querySelector("#startGame");
   const gameSubtitle = root.querySelector("#gameSubtitle");
+  const roundResultBox = root.querySelector("#roundResult");
+  let roundResult = null;
 
   function emptyState(count) {
     return {
@@ -340,7 +342,88 @@
     renderChoices();
   }
 
+  function hideRoundResult() {
+    roundResult = null;
+    if (roundResultBox) {
+      roundResultBox.hidden = true;
+      roundResultBox.innerHTML = "";
+    }
+  }
+
+  function paintRoundResult() {
+    if (!roundResultBox) return;
+    if (!roundResult) {
+      roundResultBox.hidden = true;
+      roundResultBox.innerHTML = "";
+      return;
+    }
+    const tone = roundResult.won
+      ? "win"
+      : roundResult.kind === "correct" || roundResult.kind === "mc-correct"
+        ? "correct"
+        : "wrong";
+    const headline = roundResult.won
+      ? "WINS!"
+      : roundResult.kind === "correct" || roundResult.kind === "mc-correct"
+        ? "CORRECT"
+        : "WRONG";
+    const delta =
+      roundResult.delta > 0
+        ? "+" + roundResult.delta
+        : roundResult.delta < 0
+          ? String(roundResult.delta)
+          : "";
+    roundResultBox.hidden = false;
+    roundResultBox.className = "round-result " + tone;
+    let html = "";
+    if (roundResult.playerIndex !== null) {
+      html += '<span class="avatar-emoji">' + (roundResult.avatar || "🦊") + "</span>";
+    }
+    html += '<div class="round-name">' + roundResult.name + "</div>";
+    html += '<div class="round-verdict">' + headline + "</div>";
+    if (delta) html += '<div class="round-delta">' + delta + "</div>";
+    if (roundResult.playerIndex !== null) {
+      html += '<div class="round-score">Score ' + roundResult.score + "</div>";
+    }
+    if (roundResult.answer) {
+      html += '<div class="round-answer"><span>Answer</span>' + roundResult.answer + "</div>";
+    } else if (roundResult.kind === "wrong") {
+      html += '<div class="round-hint">Answer stays hidden. Someone else can steal.</div>';
+    } else if (roundResult.kind === "mc-wrong") {
+      html += '<div class="round-hint">That choice is out. Pick another.</div>';
+    }
+    if (roundResult.won) {
+      html += '<div class="round-hint">First to the winning score. New night?</div>';
+    }
+    html += '<span class="round-continue">' + roundResult.continueLabel + "</span>";
+    roundResultBox.innerHTML = html;
+  }
+
+  function dismissRoundResult() {
+    if (!roundResult) return;
+    if (roundResult.won) {
+      root.querySelector("#reset").click();
+      return;
+    }
+    const result = roundResult;
+    hideRoundResult();
+    if (result.kind === "correct") {
+      advanceQuestion();
+      status.textContent = names[state.reader] + " reads. Press Show Question.";
+      render();
+      return;
+    }
+    if (result.kind === "wrong" && result.allStumped) {
+      state.multipleChoice = true;
+      choices = buildChoices(currentQuestion());
+      playMultipleChoiceSound();
+      status.textContent = "Table's stumped — four choices. Slap in, then pick one.";
+    }
+    render();
+  }
+
   function render() {
+    paintRoundResult();
     readerLabel.textContent = names.length ? names[state.reader] + " is reading" : "Set up the game";
     renderQuestion();
     players.innerHTML = "";
@@ -397,18 +480,32 @@
   }
 
   function correct(i) {
-    if (i === state.reader || state.winner) return;
+    if (i === state.reader || state.winner || roundResult) return;
     snapshot();
     playCorrectSound();
     state.scores[i] += 1;
+    state.answerVisible = true;
+    const won = state.scores[i] >= winTarget;
+    if (won) state.winner = { index: i };
     status.textContent = names[i] + " answered correctly: +1 point.";
-    advanceQuestion();
-    if (state.scores[i] >= winTarget) state.winner = { index: i };
+    const q = currentQuestion();
+    roundResult = {
+      kind: "correct",
+      playerIndex: i,
+      name: names[i],
+      avatar: avatars[i] || AVATARS[i % AVATARS.length],
+      delta: 1,
+      score: state.scores[i],
+      answer: q ? q.answer : null,
+      won: won,
+      allStumped: false,
+      continueLabel: won ? "New game" : "Next question",
+    };
     render();
   }
 
   function wrong(i) {
-    if (i === state.reader || state.winner) return;
+    if (i === state.reader || state.winner || roundResult) return;
     snapshot();
     playWrongSound();
     state.misses[i] += 1;
@@ -416,40 +513,72 @@
     const penalty = state.misses[i];
     state.scores[i] -= penalty;
     const competitors = names.map((_, idx) => idx).filter((idx) => idx !== state.reader);
-    const allStumped = competitors.length > 0 && competitors.every((idx) => state.missedThisQuestion[idx]);
-    if (allStumped && !state.multipleChoice) {
-      state.multipleChoice = true;
-      choices = buildChoices(currentQuestion());
-      playMultipleChoiceSound();
-      status.textContent =
-        names[i] + " was wrong: -" + penalty + ". Table's stumped — multiple choice is up.";
-      render();
-      return;
-    }
-    status.textContent =
-      names[i] + " was wrong: -" + penalty + ". Any other non-reader may answer next.";
+    const allStumped =
+      competitors.length > 0 &&
+      competitors.every((idx) => state.missedThisQuestion[idx]) &&
+      !state.multipleChoice;
+    status.textContent = allStumped
+      ? names[i] + " was wrong: -" + penalty + ". Table's stumped."
+      : names[i] + " was wrong: -" + penalty + ". Any other non-reader may answer next.";
+    roundResult = {
+      kind: "wrong",
+      playerIndex: i,
+      name: names[i],
+      avatar: avatars[i] || AVATARS[i % AVATARS.length],
+      delta: -penalty,
+      score: state.scores[i],
+      answer: null,
+      won: false,
+      allStumped: allStumped,
+      continueLabel: allStumped ? "Multiple choice" : "Next slap",
+    };
     render();
   }
 
   function pickChoice(index) {
-    if (!state.multipleChoice || state.winner || state.answerVisible) return;
+    if (!state.multipleChoice || state.winner || state.answerVisible || roundResult) return;
     const choice = choices[index];
     if (!choice || state.eliminatedChoices.includes(index)) return;
     if (choice.correct) {
       playCorrectSound();
       state.answerVisible = true;
       status.textContent = "That's the one. Mark who got it.";
+      const q = currentQuestion();
+      roundResult = {
+        kind: "mc-correct",
+        playerIndex: null,
+        name: "Somebody knew it",
+        avatar: null,
+        delta: 0,
+        score: 0,
+        answer: q ? q.answer : choice.text,
+        won: false,
+        allStumped: false,
+        continueLabel: "Who got it?",
+      };
       render();
       return;
     }
     playWrongSound();
     state.eliminatedChoices.push(index);
     status.textContent = "Nope. Cross that one out and try another.";
+    roundResult = {
+      kind: "mc-wrong",
+      playerIndex: null,
+      name: choice.text,
+      avatar: null,
+      delta: 0,
+      score: 0,
+      answer: null,
+      won: false,
+      allStumped: false,
+      continueLabel: "Try another",
+    };
     render();
   }
 
   function enableMultipleChoice() {
-    if (!currentQuestion() || !state.questionVisible || state.winner || state.multipleChoice) return;
+    if (!currentQuestion() || !state.questionVisible || state.winner || state.multipleChoice || roundResult) return;
     playMultipleChoiceSound();
     state.multipleChoice = true;
     choices = buildChoices(currentQuestion());
@@ -458,7 +587,7 @@
   }
 
   showQuestion.addEventListener("click", () => {
-    if (!currentQuestion()) return;
+    if (!currentQuestion() || roundResult) return;
     if (state.answerVisible) {
       ringAlarm();
       confirmOverlay.hidden = false;
@@ -538,8 +667,11 @@
       startGame.disabled = false;
     }
   });
+  if (roundResultBox) {
+    roundResultBox.addEventListener("click", dismissRoundResult);
+  }
   root.querySelector("#nextReader").addEventListener("click", () => {
-    if (state.winner || !activeLevel || !names.length) return;
+    if (state.winner || !activeLevel || !names.length || roundResult) return;
     snapshot();
     advanceQuestion();
     state.reader = (state.reader + 1) % names.length;
@@ -550,6 +682,7 @@
     if (!history.length) return;
     state = Object.assign(emptyState(names.length), JSON.parse(history.pop()));
     confirmOverlay.hidden = true;
+    hideRoundResult();
     if (state.multipleChoice && currentQuestion()) choices = buildChoices(currentQuestion());
     status.textContent = "Last scoring action undone. Question position is unchanged.";
     render();
@@ -558,6 +691,7 @@
     history = [];
     state = emptyState(0);
     confirmOverlay.hidden = true;
+    hideRoundResult();
     activeLevel = null;
     questionPool = [];
     names = [];

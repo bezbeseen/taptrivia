@@ -36,6 +36,19 @@ export type GameState = {
   eliminatedChoices: number[];
 };
 
+export type RoundResult = {
+  kind: "correct" | "wrong" | "mc-correct" | "mc-wrong";
+  playerIndex: number | null;
+  name: string;
+  avatar: number;
+  delta: number;
+  score: number;
+  answer: string | null;
+  won: boolean;
+  allStumped: boolean;
+  continueLabel: string;
+};
+
 const DEFAULT_NAMES = ["Bez", "Sean", "Marc"];
 
 function emptyState(count = 0): GameState {
@@ -75,6 +88,7 @@ export function useSlapTrivia() {
   const [status, setStatus] = useState("Set up the game to begin.");
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [roundResult, setRoundResult] = useState<RoundResult | null>(null);
 
   const questionIndex = activeLevel ? indexes[activeLevel] : 0;
   const currentQuestion = pool[questionIndex] ?? null;
@@ -170,6 +184,7 @@ export function useSlapTrivia() {
       setHistory([]);
       setSetup(false);
       setConfirmOpen(false);
+      setRoundResult(null);
       setStatus(`${nextNames[0]} reads first.`);
     } catch (error) {
       setLoadError(error instanceof Error ? error.message : "Could not load questions.");
@@ -180,7 +195,7 @@ export function useSlapTrivia() {
   };
 
   const showQuestion = () => {
-    if (!currentQuestion) return;
+    if (!currentQuestion || roundResult) return;
     if (state.answerVisible) {
       ringAlarm();
       setConfirmOpen(true);
@@ -207,12 +222,12 @@ export function useSlapTrivia() {
   };
 
   const showAnswer = () => {
-    if (!currentQuestion || !state.questionVisible) return;
+    if (!currentQuestion || !state.questionVisible || roundResult) return;
     setState((prev) => ({ ...prev, answerVisible: true }));
   };
 
   const enableMultipleChoice = () => {
-    if (!currentQuestion || !state.questionVisible || state.winner) return;
+    if (!currentQuestion || !state.questionVisible || state.winner || roundResult) return;
     if (state.multipleChoice) return;
     playMultipleChoiceSound();
     setState((prev) => ({ ...prev, multipleChoice: true }));
@@ -225,7 +240,9 @@ export function useSlapTrivia() {
   }, [currentQuestion, pool, state.multipleChoice]);
 
   const pickChoice = (choiceIndex: number) => {
-    if (!state.multipleChoice || state.winner || state.answerVisible) return;
+    if (!state.multipleChoice || state.winner || state.answerVisible || roundResult) {
+      return;
+    }
     const choice = choices[choiceIndex];
     if (!choice || state.eliminatedChoices.includes(choiceIndex)) return;
     if (choice.correct) {
@@ -235,6 +252,18 @@ export function useSlapTrivia() {
         answerVisible: true,
         eliminatedChoices: prev.eliminatedChoices,
       }));
+      setRoundResult({
+        kind: "mc-correct",
+        playerIndex: null,
+        name: "Somebody knew it",
+        avatar: 0,
+        delta: 0,
+        score: 0,
+        answer: currentQuestion?.answer ?? choice.text,
+        won: false,
+        allStumped: false,
+        continueLabel: "Who got it?",
+      });
       setStatus("That's the one. Mark who got it.");
       return;
     }
@@ -243,29 +272,52 @@ export function useSlapTrivia() {
       ...prev,
       eliminatedChoices: [...prev.eliminatedChoices, choiceIndex],
     }));
+    setRoundResult({
+      kind: "mc-wrong",
+      playerIndex: null,
+      name: choice.text,
+      avatar: 0,
+      delta: 0,
+      score: 0,
+      answer: null,
+      won: false,
+      allStumped: false,
+      continueLabel: "Try another",
+    });
     setStatus("Nope. Cross that one out and try another.");
   };
 
   const markCorrect = (index: number) => {
-    if (index === state.reader || state.winner) return;
+    if (index === state.reader || state.winner || roundResult) return;
     snapshot();
     playCorrectSound();
     const scores = [...state.scores];
     scores[index] = (scores[index] ?? 0) + 1;
-    let next: GameState = { ...state, scores };
-    const advanced = advanceQuestion(next, indexes);
-    next = advanced.nextState;
-    setIndexes(advanced.nextIndexes);
-    if ((scores[index] ?? 0) >= winTarget) {
-      next = { ...next, winner: { index } };
-    }
-    setState(next);
+    const won = (scores[index] ?? 0) >= winTarget;
+    setState({
+      ...state,
+      scores,
+      answerVisible: true,
+      winner: won ? { index } : state.winner,
+    });
     setConfirmOpen(false);
+    setRoundResult({
+      kind: "correct",
+      playerIndex: index,
+      name: names[index] ?? `Player ${index + 1}`,
+      avatar: avatars[index] ?? index,
+      delta: 1,
+      score: scores[index] ?? 1,
+      answer: currentQuestion?.answer ?? null,
+      won,
+      allStumped: false,
+      continueLabel: won ? "New game" : "Next question",
+    });
     setStatus(`${names[index]} answered correctly: +1 point.`);
   };
 
   const markWrong = (index: number) => {
-    if (index === state.reader || state.winner) return;
+    if (index === state.reader || state.winner || roundResult) return;
     snapshot();
     playWrongSound();
     const misses = [...state.misses];
@@ -277,29 +329,61 @@ export function useSlapTrivia() {
     scores[index] = (scores[index] ?? 0) - penalty;
     const competitors = names.map((_, i) => i).filter((i) => i !== state.reader);
     const allStumped =
-      competitors.length > 0 && competitors.every((i) => missedThisQuestion[i]);
-    const next: GameState = {
+      competitors.length > 0 &&
+      competitors.every((i) => missedThisQuestion[i]) &&
+      !state.multipleChoice;
+    setState({
       ...state,
       misses,
       scores,
       missedThisQuestion,
-      multipleChoice: state.multipleChoice || allStumped,
-    };
-    setState(next);
-    if (allStumped && !state.multipleChoice) {
-      playMultipleChoiceSound();
-      setStatus(
-        `${names[index]} was wrong: -${penalty}. Table's stumped — multiple choice is up.`
-      );
-      return;
-    }
+    });
+    setRoundResult({
+      kind: "wrong",
+      playerIndex: index,
+      name: names[index] ?? `Player ${index + 1}`,
+      avatar: avatars[index] ?? index,
+      delta: -penalty,
+      score: scores[index] ?? 0,
+      answer: null,
+      won: false,
+      allStumped,
+      continueLabel: allStumped ? "Multiple choice" : "Next slap",
+    });
     setStatus(
-      `${names[index]} was wrong: -${penalty}. Any other non-reader may answer next.`
+      allStumped
+        ? `${names[index]} was wrong: -${penalty}. Table's stumped.`
+        : `${names[index]} was wrong: -${penalty}. Any other non-reader may answer next.`
     );
   };
 
+  const dismissRoundResult = () => {
+    if (!roundResult || roundResult.won) return;
+    const result = roundResult;
+    if (result.won) {
+      resetGame();
+      return;
+    }
+    setRoundResult(null);
+    if (result.kind === "correct") {
+      const advanced = advanceQuestion(state, indexes);
+      setIndexes(advanced.nextIndexes);
+      setState(advanced.nextState);
+      setConfirmOpen(false);
+      setStatus(
+        `${names[state.reader] ?? "The reader"} reads. Press Show Question.`
+      );
+      return;
+    }
+    if (result.kind === "wrong" && result.allStumped) {
+      playMultipleChoiceSound();
+      setState((prev) => ({ ...prev, multipleChoice: true }));
+      setStatus("Table's stumped — four choices. Slap in, then pick one.");
+    }
+  };
+
   const nextReader = () => {
-    if (state.winner || !activeLevel || !names.length) return;
+    if (state.winner || !activeLevel || !names.length || roundResult) return;
     snapshot();
     const advanced = advanceQuestion(state, indexes);
     setIndexes(advanced.nextIndexes);
@@ -316,6 +400,7 @@ export function useSlapTrivia() {
     setHistory((prev) => prev.slice(0, -1));
     const parsed = JSON.parse(previous) as GameState;
     const count = parsed.scores?.length ?? names.length;
+    setRoundResult(null);
     setState({
       ...emptyState(count),
       ...parsed,
@@ -331,6 +416,7 @@ export function useSlapTrivia() {
     setHistory([]);
     setState(emptyState());
     setConfirmOpen(false);
+    setRoundResult(null);
     setActiveLevel(null);
     setPool([]);
     setNames([]);
@@ -386,6 +472,8 @@ export function useSlapTrivia() {
     pickChoice,
     markCorrect,
     markWrong,
+    roundResult,
+    dismissRoundResult,
     nextReader,
     undo,
     resetGame,

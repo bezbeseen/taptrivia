@@ -7,6 +7,65 @@ import "@/app/slap15.css";
 
 export function Slap15App() {
   const game = useSlapTrivia();
+  const result = game.roundResult;
+
+  if (result) {
+    const tone =
+      result.won
+        ? "win"
+        : result.kind === "correct" || result.kind === "mc-correct"
+          ? "correct"
+          : "wrong";
+    const headline = result.won
+      ? "WINS!"
+      : result.kind === "correct" || result.kind === "mc-correct"
+        ? "CORRECT"
+        : "WRONG";
+    const deltaText =
+      result.delta > 0 ? `+${result.delta}` : result.delta < 0 ? String(result.delta) : null;
+
+    return (
+      <div className={`slap15 round-open ${tone}`}>
+        <div
+          className={`round-result ${tone}`}
+          role="button"
+          tabIndex={0}
+          onClick={result.won ? game.resetGame : game.dismissRoundResult}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              if (result.won) game.resetGame();
+              else game.dismissRoundResult();
+            }
+          }}
+        >
+          {result.playerIndex !== null ? (
+            <PlayerAvatar id={result.avatar} size={120} title={result.name} />
+          ) : null}
+          <div className="round-name">{result.name}</div>
+          <div className="round-verdict">{headline}</div>
+          {deltaText ? <div className="round-delta">{deltaText}</div> : null}
+          {result.playerIndex !== null ? (
+            <div className="round-score">Score {result.score}</div>
+          ) : null}
+          {result.answer ? (
+            <div className="round-answer">
+              <span>Answer</span>
+              {result.answer}
+            </div>
+          ) : result.kind === "wrong" ? (
+            <div className="round-hint">Answer stays hidden. Someone else can steal.</div>
+          ) : result.kind === "mc-wrong" ? (
+            <div className="round-hint">That choice is out. Pick another.</div>
+          ) : null}
+          {result.won ? (
+            <div className="round-hint">First to the winning score. New night?</div>
+          ) : null}
+          <span className="round-continue">{result.continueLabel}</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="slap15">

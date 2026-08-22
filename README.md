@@ -8,7 +8,7 @@ One player reads. The others compete. First slap gets the first answer. First to
 
 - Pick a question level, 3–8 players, and the winning score.
 - The reader shows the question, then the answer.
-- **+1 Correct** for a right answer.
+- **+1 Correct** or **Wrong** takes over the screen with the result. Tap to continue.
 - Wrong answers escalate per player: first miss −1, second −2, third −3, and so on.
 - The reader cannot score on their own question.
 - **Next Reader** rotates the card. **Undo Last** reverses the last score. **Reset Game** starts a new night but keeps each level’s question position.
