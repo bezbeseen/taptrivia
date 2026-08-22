@@ -9,7 +9,20 @@ import {
   rotateCell,
   type Puzzle,
 } from "@/lib/pipes";
+import { PlayerAvatar } from "@/components/player-avatar";
 import { playPuzzleWin, playRotateSound, playUiTap } from "@/lib/sounds";
+
+export type SideQuestPlayer = {
+  name: string;
+  avatar: number;
+};
+
+function tableList(names: string[]) {
+  if (names.length === 0) return "the table";
+  if (names.length === 1) return names[0] ?? "the table";
+  if (names.length === 2) return `${names[0]} and ${names[1]}`;
+  return `${names.slice(0, -1).join(", ")}, and ${names[names.length - 1]}`;
+}
 
 function PipeGlyph({
   open,
@@ -53,7 +66,13 @@ function PipeGlyph({
   );
 }
 
-export function SideQuest({ onDone }: { onDone: () => void }) {
+export function SideQuest({
+  players,
+  onDone,
+}: {
+  players: SideQuestPlayer[];
+  onDone: () => void;
+}) {
   const [puzzle, setPuzzle] = useState<Puzzle>(() => createPuzzle());
   const [solved, setSolved] = useState(false);
   const doneRef = useRef(false);
@@ -114,20 +133,22 @@ export function SideQuest({ onDone }: { onDone: () => void }) {
     }
   };
 
+  const names = players.map((player) => player.name);
+  const crew = tableList(names);
+  const huddle = solved
+    ? `${crew} opened it. Trivia scores stay put.`
+    : "Whole table, one puzzle. Anybody can turn a pipe — no points, just get IN to OUT.";
+  const title = solved ? "Table win" : "Connect the pipes";
+
   return (
     <div className={`side-quest-root${solved ? " solved" : ""}`}>
       <button type="button" className="side-quest-skip" onClick={skip}>
         Skip puzzle
       </button>
 
-      <div className="side-quest-copy">
-        <div className="side-quest-kicker">Side quest</div>
-        <h1 className="side-quest-title">{solved ? "Open!" : "Connect the pipes"}</h1>
-        <p className="side-quest-hint">
-          {solved
-            ? "Nice. Trivia scores stay put."
-            : "Tap a pipe to rotate it. Get IN all the way to OUT. Anyone can help."}
-        </p>
+      <div className="side-quest-copy far" aria-hidden>
+        <div className="side-quest-kicker">Whole table</div>
+        <p className="side-quest-hint">{huddle}</p>
       </div>
 
       <div className="side-quest-board">
@@ -184,6 +205,21 @@ export function SideQuest({ onDone }: { onDone: () => void }) {
             </div>
           ))}
         </div>
+      </div>
+
+      <div className="side-quest-crew" aria-label={`${crew} solving together`}>
+        {players.map((player, index) => (
+          <div className="side-quest-seat" key={`${player.name}-${index}`}>
+            <PlayerAvatar id={player.avatar} size={44} title={player.name} />
+            <span>{player.name}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="side-quest-copy near">
+        <div className="side-quest-kicker">Whole table</div>
+        <h1 className="side-quest-title">{title}</h1>
+        <p className="side-quest-hint">{huddle}</p>
       </div>
     </div>
   );

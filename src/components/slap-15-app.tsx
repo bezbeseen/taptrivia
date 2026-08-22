@@ -24,7 +24,15 @@ export function Slap15App() {
   const turnKicker = game.state.winner ? "Winner" : "Now reading";
 
   if (game.puzzleOpen) {
-    return <SideQuest onDone={game.endPuzzle} />;
+    return (
+      <SideQuest
+        players={game.names.map((name, index) => ({
+          name,
+          avatar: game.avatars[index] ?? index,
+        }))}
+        onDone={game.endPuzzle}
+      />
+    );
   }
 
   if (result) {
@@ -133,9 +141,9 @@ export function Slap15App() {
               </li>
               <li>First player to reach the winning net points wins.</li>
               <li>
-                After a correct answer, a short pipe puzzle pops up. Tap a pipe
-                to rotate it and connect IN to OUT. It does not change the
-                score. Skip it anytime.
+                After a correct answer, the whole table gets a short pipe
+                puzzle. Anybody can turn a pipe. It does not change the score.
+                Skip it anytime.
               </li>
               <li>Questions continue forward even after Reset Game.</li>
             </ul>
