@@ -1,6 +1,6 @@
 import type { Level } from "@/lib/questions";
 
-const KEY = "slap-15-question-indexes";
+const KEY = "slap-15-question-indexes-v2";
 
 export type QuestionIndexes = Record<Level, number>;
 

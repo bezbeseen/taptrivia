@@ -7,6 +7,8 @@ export type TriviaQuestion = {
   answer: string;
   difficulty: Level;
   order: number;
+  category: string;
+  distractors: string[];
 };
 
 export const LEVELS: { value: Level; label: string }[] = [
@@ -24,7 +26,32 @@ export function levelLabel(level: Level): string {
 type SourceQuestion = {
   question?: string;
   answer?: string;
+  difficulty?: string;
+  category?: string;
+  distractors?: unknown;
 };
+
+function asDifficulty(value: string | undefined): Exclude<Level, "mix"> {
+  const key = (value || "").toLowerCase();
+  if (key === "easy" || key === "medium" || key === "hard" || key === "smart") return key;
+  if (key === "medium-hard") return "hard";
+  return "medium";
+}
+
+function asDistractors(value: unknown, answer: string): string[] {
+  if (!Array.isArray(value)) return [];
+  const seen = new Set([answer.trim().toLowerCase()]);
+  const out: string[] = [];
+  for (const item of value) {
+    const text = String(item ?? "").trim();
+    const key = text.toLowerCase();
+    if (!text || seen.has(key) || text.length > 48) continue;
+    seen.add(key);
+    out.push(text);
+    if (out.length === 3) break;
+  }
+  return out;
+}
 
 export function seededShuffle<T>(items: T[], seed: number): T[] {
   const arr = items.slice();
@@ -40,62 +67,21 @@ export function seededShuffle<T>(items: T[], seed: number): T[] {
   return arr;
 }
 
-function variantQuestion(text: string, level: Exclude<Level, "mix">, variant: number): string {
-  const q = text.trim().replace(/\s+/g, " ").replace(/\?$/, "");
-  const styles = {
-    easy: ["What is the answer to this: ", "Quick one: ", "Name this: ", "Identify this: "],
-    medium: [
-      "Answer this: ",
-      "Identify the correct answer: ",
-      "Trivia question: ",
-      "Name the answer: ",
-    ],
-    hard: [
-      "Be precise: ",
-      "Give the exact answer: ",
-      "Advanced trivia: ",
-      "Identify precisely: ",
-    ],
-    smart: [
-      "Smart AF: ",
-      "No hints — identify this: ",
-      "Expert-level: ",
-      "Give the most precise answer: ",
-    ],
-  };
-  return `${styles[level][variant % 4]}${q}?`;
+function withOrder(items: TriviaQuestion[], seed: number): TriviaQuestion[] {
+  return seededShuffle(items, seed).map((item, index) => ({ ...item, order: index + 1 }));
 }
 
-function buildPool(
-  source: { question: string; answer: string }[],
-  level: Exclude<Level, "mix">,
-  count: number,
-  seed: number
-): TriviaQuestion[] {
-  const shuffled = seededShuffle(source, seed);
+function interleave(groups: TriviaQuestion[][], seed: number): TriviaQuestion[] {
+  const shuffled = groups.map((group, index) => seededShuffle(group, seed + index * 97));
   const out: TriviaQuestion[] = [];
-  const seen = new Set<string>();
-  let pass = 0;
-  while (out.length < count) {
-    for (let i = 0; i < shuffled.length && out.length < count; i++) {
-      const item = shuffled[i]!;
-      const question =
-        pass === 0
-          ? variantQuestion(item.question, level, pass)
-          : variantQuestion(item.question, level, pass + (i % 4));
-      const key = question.toLowerCase();
-      if (seen.has(key)) continue;
-      seen.add(key);
-      out.push({
-        question,
-        answer: item.answer,
-        difficulty: level,
-        order: out.length + 1,
-      });
+  const max = Math.max(0, ...shuffled.map((group) => group.length));
+  for (let i = 0; i < max; i++) {
+    for (const group of shuffled) {
+      const item = group[i];
+      if (item) out.push(item);
     }
-    pass += 1;
   }
-  return seededShuffle(out, seed + 777).map((q, i) => ({ ...q, order: i + 1 }));
+  return out.map((item, index) => ({ ...item, difficulty: "mix" as const, order: index + 1 }));
 }
 
 export type QuestionBanks = Record<Level, TriviaQuestion[]>;
@@ -104,27 +90,32 @@ let cache: QuestionBanks | null = null;
 
 export function loadQuestionBanks(): QuestionBanks {
   if (cache) return cache;
-  const flattened = (rawQuestions as unknown[])
-    .flat()
-    .map((item) => {
-      if (Array.isArray(item)) {
-        return { question: String(item[0] ?? ""), answer: String(item[1] ?? "") };
-      }
-      const q = item as SourceQuestion;
-      return { question: q.question ?? "", answer: q.answer ?? "" };
-    })
-    .filter((item) => item.question && item.answer);
-  const unique = [
-    ...new Map(flattened.map((item) => [item.question.trim().toLowerCase(), item])).values(),
-  ];
-  const easy = buildPool(unique, "easy", 1500, 1101);
-  const medium = buildPool(unique, "medium", 1500, 2202);
-  const hard = buildPool(unique, "hard", 1500, 3303);
-  const smart = buildPool(unique, "smart", 1500, 4404);
-  const mix = seededShuffle(
-    [...easy.slice(0, 300), ...medium.slice(0, 750), ...hard.slice(0, 300), ...smart.slice(0, 150)],
-    5505
-  ).map((q, i) => ({ ...q, difficulty: "mix" as const, order: i + 1 }));
+  const parsed: TriviaQuestion[] = [];
+  for (const item of rawQuestions as SourceQuestion[]) {
+    const question = String(item.question ?? "").trim();
+    const answer = String(item.answer ?? "").trim();
+    if (!question || !answer) continue;
+    parsed.push({
+      question,
+      answer,
+      difficulty: asDifficulty(item.difficulty),
+      order: 0,
+      category: String(item.category ?? "General Knowledge").trim() || "General Knowledge",
+      distractors: asDistractors(item.distractors, answer),
+    });
+  }
+
+  const unique = [...new Map(parsed.map((item) => [item.question.trim().toLowerCase(), item])).values()];
+
+  const easySource = unique.filter((item) => item.difficulty === "easy");
+  const mediumSource = unique.filter((item) => item.difficulty === "medium");
+  const hardSource = unique.filter((item) => item.difficulty === "hard");
+  const smartSource = unique.filter((item) => item.difficulty === "smart");
+  const easy = withOrder(easySource.length ? easySource : mediumSource, 1101);
+  const medium = withOrder(mediumSource.length ? mediumSource : unique, 2202);
+  const hard = withOrder(hardSource.length ? hardSource : medium, 3303);
+  const smart = withOrder(smartSource.length ? smartSource : hardSource.length ? hardSource : medium, 4404);
+  const mix = interleave([easy, medium, hard, smart], 5505);
   cache = { easy, medium, hard, smart, mix };
   return cache;
 }
@@ -151,22 +142,53 @@ export function buildMultipleChoices(
   const correct = question.answer.trim();
   const seen = new Set([correct.toLowerCase()]);
   const distractors: string[] = [];
-  const shuffled = seededShuffle(pool, hashSeed(question.question + question.order));
-  for (const item of shuffled) {
-    const answer = item.answer.trim();
+
+  for (const text of question.distractors) {
+    const answer = text.trim();
     const key = answer.toLowerCase();
-    if (seen.has(key) || !answer) continue;
+    if (!answer || seen.has(key)) continue;
     seen.add(key);
     distractors.push(answer);
     if (distractors.length >= count - 1) break;
   }
+
+  const sameCategory = seededShuffle(
+    pool.filter((item) => item.category === question.category),
+    hashSeed(question.question + "cat")
+  );
+  const rest = seededShuffle(pool, hashSeed(question.question + question.order));
+  for (const item of [...sameCategory, ...rest]) {
+    if (distractors.length >= count - 1) break;
+    const answer = item.answer.trim();
+    const key = answer.toLowerCase();
+    if (!answer || seen.has(key)) continue;
+    seen.add(key);
+    distractors.push(answer);
+  }
+
   const fallback = ["Red herring", "Nobody knows", "Skip this", "A wild guess"];
   while (distractors.length < count - 1) {
     const extra = fallback[distractors.length] ?? `Option ${distractors.length + 2}`;
-    if (!seen.has(extra.toLowerCase())) distractors.push(extra);
+    if (!seen.has(extra.toLowerCase())) {
+      seen.add(extra.toLowerCase());
+      distractors.push(extra);
+    } else {
+      break;
+    }
   }
+
   return seededShuffle(
     [{ text: correct, correct: true }, ...distractors.map((text) => ({ text, correct: false }))],
     hashSeed(question.answer + "mc")
   );
+}
+
+export function bankCounts(banks: QuestionBanks): Record<Level, number> {
+  return {
+    easy: banks.easy.length,
+    medium: banks.medium.length,
+    hard: banks.hard.length,
+    smart: banks.smart.length,
+    mix: banks.mix.length,
+  };
 }

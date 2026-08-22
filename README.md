@@ -17,6 +17,25 @@ One player reads. The others compete. First slap gets the first answer. First to
 
 Question progress is stored in this browser by level.
 
+## Question library
+
+A few thousand unique questions, written to be read out loud. Easy, Medium, Hard, and Smart AF are real difficulty bands — Mix weaves all four together.
+
+Sources:
+
+- A curated party pack of short-answer trivia
+- [The Trivia API](https://the-trivia-api.com)
+- [Open Trivia Database](https://opentdb.com)
+- The original SLAP 15 bank, cleaned up
+
+Rebuild the merged file with:
+
+```bash
+python3 scripts/build-question-bank.py
+```
+
+That writes `src/data/questions.json`. Multiple-choice steal rounds prefer each question’s own wrong answers, then other answers from the same category.
+
 ## Local copy (no server required)
 
 The original trivia-only build also lives in [`local/`](local/README.md) if you want a single HTML file without the hippos mini-game.
@@ -40,4 +59,4 @@ npm start
 
 ## Stack
 
-Next.js, TypeScript, Tailwind CSS, and shadcn/ui. The question bank is the same compressed set as the original `weddingmarking` SLAP 15 build.
+Next.js, TypeScript, Tailwind CSS, and shadcn/ui.

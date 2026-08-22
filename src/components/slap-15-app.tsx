@@ -199,6 +199,9 @@ export function Slap15App() {
                   {game.levels.map((item) => (
                     <option key={item.value} value={item.value}>
                       {item.label}
+                    {game.questionCounts[item.value]
+                      ? ` · ${game.questionCounts[item.value].toLocaleString()} questions`
+                      : ""}
                     </option>
                   ))}
                 </select>
@@ -274,7 +277,11 @@ export function Slap15App() {
         ) : (
           <section className="question-panel" aria-live="polite">
             <div className="qmeta">
-              {game.activeLevel ? levelLabel(game.activeLevel) : "Ready"}
+              {game.activeLevel
+                ? game.currentQuestion?.category
+                  ? `${levelLabel(game.activeLevel)} · ${game.currentQuestion.category}`
+                  : levelLabel(game.activeLevel)
+                : "Ready"}
             </div>
             <div className="qtext">
               {!game.currentQuestion

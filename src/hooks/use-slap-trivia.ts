@@ -9,6 +9,7 @@ import {
 } from "@/lib/question-progress";
 import {
   LEVELS,
+  bankCounts,
   buildMultipleChoices,
   levelLabel,
   loadQuestionBanks,
@@ -104,6 +105,14 @@ export function useSlapTrivia() {
   const [roundResult, setRoundResult] = useState<RoundResult | null>(null);
   const [puzzleOpen, setPuzzleOpen] = useState(false);
 
+  const questionCounts = useMemo(() => {
+    try {
+      return bankCounts(loadQuestionBanks());
+    } catch {
+      return { easy: 0, medium: 0, hard: 0, smart: 0, mix: 0 };
+    }
+  }, []);
+
   const questionIndex = activeLevel ? indexes[activeLevel] : 0;
   const currentQuestion = pool[questionIndex] ?? null;
 
@@ -163,8 +172,8 @@ export function useSlapTrivia() {
         };
       }
       const updated = { ...nextIndexes };
-      if (questionIndex < pool.length - 1) {
-        updated[activeLevel] = questionIndex + 1;
+      if (pool.length > 0) {
+        updated[activeLevel] = (questionIndex + 1) % pool.length;
       }
       saveQuestionIndexes(updated);
       return {
@@ -508,6 +517,7 @@ export function useSlapTrivia() {
     activeLevel,
     currentQuestion,
     questionIndex,
+    questionCounts,
     poolSize: pool.length,
     state,
     status,
