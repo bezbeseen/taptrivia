@@ -19,7 +19,7 @@ Question progress is stored in this browser by level.
 
 ## Local copy (no server required)
 
-The original game also lives in [`local/`](local/README.md).
+The original trivia-only build also lives in [`local/`](local/README.md) if you want a single HTML file without the pipe puzzle.
 
 - Open **`local/slap-15.html`** in a browser — one file, question bank included.
 - Or serve the `local/` folder if you want the original `preview.html` split.
