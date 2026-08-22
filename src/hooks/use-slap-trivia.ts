@@ -102,7 +102,7 @@ export function useSlapTrivia() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [roundResult, setRoundResult] = useState<RoundResult | null>(null);
-  const [tableSlapOpen, setTableSlapOpen] = useState(false);
+  const [puzzleOpen, setPuzzleOpen] = useState(false);
 
   const questionIndex = activeLevel ? indexes[activeLevel] : 0;
   const currentQuestion = pool[questionIndex] ?? null;
@@ -213,7 +213,7 @@ export function useSlapTrivia() {
       setSetup(false);
       setConfirmOpen(false);
       setRoundResult(null);
-      setTableSlapOpen(false);
+      setPuzzleOpen(false);
       playStartSound();
       setStatus(`${nextNames[0]} reads first.`);
     } catch (error) {
@@ -412,7 +412,7 @@ export function useSlapTrivia() {
         `${names[state.reader] ?? "The reader"} reads. Press Show Question.`
       );
       if (names.length >= 2) {
-        setTableSlapOpen(true);
+        setPuzzleOpen(true);
       }
       return;
     }
@@ -444,7 +444,7 @@ export function useSlapTrivia() {
     const parsed = JSON.parse(previous) as GameState;
     const count = parsed.scores?.length ?? names.length;
     setRoundResult(null);
-    setTableSlapOpen(false);
+    setPuzzleOpen(false);
     setState({
       ...emptyState(count),
       ...parsed,
@@ -462,7 +462,7 @@ export function useSlapTrivia() {
     setState(emptyState());
     setConfirmOpen(false);
     setRoundResult(null);
-    setTableSlapOpen(false);
+    setPuzzleOpen(false);
     setActiveLevel(null);
     setPool([]);
     setNames([]);
@@ -471,8 +471,8 @@ export function useSlapTrivia() {
     setStatus("New game. Question progress is preserved by level.");
   };
 
-  const endTableSlap = useCallback(() => {
-    setTableSlapOpen(false);
+  const endPuzzle = useCallback(() => {
+    setPuzzleOpen(false);
   }, []);
 
   const subtitle = useMemo(() => {
@@ -530,8 +530,8 @@ export function useSlapTrivia() {
     markWrong,
     roundResult,
     dismissRoundResult,
-    tableSlapOpen,
-    endTableSlap,
+    puzzleOpen,
+    endPuzzle,
     nextReader,
     undo,
     resetGame,

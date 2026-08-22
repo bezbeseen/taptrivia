@@ -2,7 +2,7 @@
 
 import { useSlapTrivia } from "@/hooks/use-slap-trivia";
 import { PlayerAvatar } from "@/components/player-avatar";
-import { TableSlap } from "@/components/table-slap";
+import { SideQuest } from "@/components/side-quest";
 import { levelLabel } from "@/lib/questions";
 import { playUiTap } from "@/lib/sounds";
 import "@/app/slap15.css";
@@ -23,16 +23,8 @@ export function Slap15App() {
 
   const turnKicker = game.state.winner ? "Winner" : "Now reading";
 
-  if (game.tableSlapOpen) {
-    return (
-      <TableSlap
-        players={game.names.map((name, index) => ({
-          name,
-          avatar: game.avatars[index] ?? index,
-        }))}
-        onDone={game.endTableSlap}
-      />
-    );
+  if (game.puzzleOpen) {
+    return <SideQuest onDone={game.endPuzzle} />;
   }
 
   if (result) {
@@ -141,9 +133,9 @@ export function Slap15App() {
               </li>
               <li>First player to reach the winning net points wins.</li>
               <li>
-                After a correct answer, Table Slap pops up: put the tablet in
-                the middle, wait for SLAP!, first pad wins bragging rights.
-                It does not change the score. Skip it anytime.
+                After a correct answer, a short pipe puzzle pops up. Tap a pipe
+                to rotate it and connect IN to OUT. It does not change the
+                score. Skip it anytime.
               </li>
               <li>Questions continue forward even after Reset Game.</li>
             </ul>

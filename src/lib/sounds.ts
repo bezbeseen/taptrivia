@@ -605,24 +605,21 @@ export function playConfirmSound() {
   play(whipCrack);
 }
 
-function woodenSlap(ac: AudioContext) {
-  noiseBurst(ac, 0, 0.05, 0.32, 2400, "highpass");
-  noiseBurst(ac, 0.01, 0.1, 0.22, 420);
-  tone(ac, { type: "triangle", freq: 190, endFreq: 52, dur: 0.14, gain: 0.22 });
-  tone(ac, { type: "sine", freq: 78, endFreq: 36, dur: 0.18, gain: 0.12 });
+function rotateClick(ac: AudioContext) {
+  tone(ac, { type: "square", freq: 520, dur: 0.06, gain: 0.08 });
+  tone(ac, { type: "triangle", freq: 780, at: 0.03, dur: 0.07, gain: 0.06 });
 }
 
-function goBlast(ac: AudioContext) {
-  tone(ac, { type: "square", freq: 880, dur: 0.1, gain: 0.16 });
-  tone(ac, { type: "square", freq: 1174, at: 0.07, dur: 0.16, gain: 0.14 });
-  noiseBurst(ac, 0, 0.08, 0.12, 2200, "highpass");
-  airhorn(ac);
+function puzzleChime(ac: AudioContext) {
+  [523, 659, 784, 1046].forEach((freq, i) => {
+    tone(ac, { type: "triangle", freq, at: i * 0.07, dur: 0.18, gain: 0.1 });
+  });
 }
 
-export function playGoSound() {
-  play(goBlast);
+export function playRotateSound() {
+  play(rotateClick);
 }
 
-export function playSlapSound() {
-  play(woodenSlap);
+export function playPuzzleWin() {
+  play(puzzleChime);
 }
