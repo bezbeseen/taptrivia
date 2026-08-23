@@ -382,6 +382,35 @@
   flex: 1 1 160px;
 }
 
+.slap15 .next-card {
+  display: flex;
+  margin-bottom: 18px;
+}
+
+.slap15 .next-card button {
+  flex: 1 1 auto;
+  min-height: 64px;
+  font-size: 22px;
+}
+
+.slap15 .score-strip {
+  background: var(--muted);
+  border: 3px dashed var(--ink);
+  border-radius: 20px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+
+.slap15 .score-strip .qmeta {
+  margin-bottom: 4px;
+}
+
+.slap15 .score-strip-answer {
+  font-size: clamp(20px, 3.4vw, 28px);
+  font-weight: 650;
+  line-height: 1.25;
+}
+
 .slap15 .players {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));

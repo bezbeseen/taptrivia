@@ -255,7 +255,16 @@ export function Slap15App() {
             </div>
             {game.loadError ? <div className="error">{game.loadError}</div> : null}
           </section>
-        ) : (
+        ) : game.state.answerVisible && game.currentQuestion ? (
+          <section className="score-strip" aria-live="polite">
+            <div className="qmeta">
+              {game.activeLevel
+                ? `${levelLabel(game.activeLevel)} · Answer`
+                : "Answer"}
+            </div>
+            <div className="score-strip-answer">{game.currentQuestion.answer}</div>
+          </section>
+        ) : game.state.questionVisible ? (
           <section className="question-panel" aria-live="polite">
             <div className="qmeta">
               {game.activeLevel
@@ -267,19 +276,9 @@ export function Slap15App() {
             <div className="qtext">
               {!game.currentQuestion
                 ? "Loading questions..."
-                : game.state.questionVisible
-                  ? game.currentQuestion.question
-                  : "Show the question when the reader is ready."}
+                : game.currentQuestion.question}
             </div>
-            {game.state.answerVisible && game.currentQuestion ? (
-              <div className="answer">
-                <span>Answer</span>
-                {game.currentQuestion.answer}
-              </div>
-            ) : null}
-            {game.state.questionVisible &&
-            game.state.multipleChoice &&
-            !game.state.answerVisible ? (
+            {game.state.multipleChoice ? (
               <div className="choices">
                 {game.choices.map((choice, index) => {
                   const out = game.state.eliminatedChoices.includes(index);
@@ -303,25 +302,9 @@ export function Slap15App() {
             <div className="qbuttons">
               <button
                 type="button"
-                className={!game.state.questionVisible ? "primary" : undefined}
-                onClick={game.showQuestion}
-                disabled={!!game.state.winner || !game.currentQuestion}
-              >
-                Show question
-              </button>
-              <button
-                type="button"
-                className={
-                  game.state.questionVisible && !game.state.answerVisible
-                    ? "primary"
-                    : undefined
-                }
+                className="primary"
                 onClick={game.showAnswer}
-                disabled={
-                  !game.state.questionVisible ||
-                  !!game.state.winner ||
-                  !game.currentQuestion
-                }
+                disabled={!!game.state.winner || !game.currentQuestion}
               >
                 Reveal answer
               </button>
@@ -330,9 +313,7 @@ export function Slap15App() {
                 className="nobody"
                 onClick={game.enableMultipleChoice}
                 disabled={
-                  !game.state.questionVisible ||
                   game.state.multipleChoice ||
-                  game.state.answerVisible ||
                   !!game.state.winner ||
                   !game.currentQuestion
                 }
@@ -341,6 +322,17 @@ export function Slap15App() {
               </button>
             </div>
           </section>
+        ) : (
+          <div className="next-card">
+            <button
+              type="button"
+              className="primary"
+              onClick={game.showQuestion}
+              disabled={!!game.state.winner || !game.currentQuestion}
+            >
+              Show question
+            </button>
+          </div>
         )}
 
         {game.confirmOpen ? (
