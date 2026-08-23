@@ -12,6 +12,7 @@ One player reads. The others compete. First slap gets the first answer. First to
 - Almost every tap has a cartoon sound — kazoos, honks, slide whistles, sad trombones, and a ta-da when someone wins.
 - Wrong answers escalate per player: first miss −1, second −2, third −3, and so on.
 - The reader cannot score on their own question.
+- If nobody knows, it becomes multiple choice. The correct-choice screen lists the other players so you can tap who scored.
 - **Next Reader** rotates the card. **Undo Last** reverses the last score. **Reset Game** starts a new night but keeps each level’s question position.
 
 Question progress is stored in this browser by level.
