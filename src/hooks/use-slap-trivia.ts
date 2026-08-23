@@ -103,8 +103,6 @@ export function useSlapTrivia() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [roundResult, setRoundResult] = useState<RoundResult | null>(null);
-  const [puzzleOpen, setPuzzleOpen] = useState(false);
-
   const questionCounts = useMemo(() => {
     try {
       return bankCounts(loadQuestionBanks());
@@ -222,7 +220,6 @@ export function useSlapTrivia() {
       setSetup(false);
       setConfirmOpen(false);
       setRoundResult(null);
-      setPuzzleOpen(false);
       playStartSound();
       setStatus(`${nextNames[0]} reads first.`);
     } catch (error) {
@@ -420,9 +417,6 @@ export function useSlapTrivia() {
       setStatus(
         `${names[state.reader] ?? "The reader"} reads. Press Show Question.`
       );
-      if (names.length >= 2) {
-        setPuzzleOpen(true);
-      }
       return;
     }
     if (result.kind === "wrong" && result.allStumped) {
@@ -453,7 +447,6 @@ export function useSlapTrivia() {
     const parsed = JSON.parse(previous) as GameState;
     const count = parsed.scores?.length ?? names.length;
     setRoundResult(null);
-    setPuzzleOpen(false);
     setState({
       ...emptyState(count),
       ...parsed,
@@ -471,7 +464,6 @@ export function useSlapTrivia() {
     setState(emptyState());
     setConfirmOpen(false);
     setRoundResult(null);
-    setPuzzleOpen(false);
     setActiveLevel(null);
     setPool([]);
     setNames([]);
@@ -479,10 +471,6 @@ export function useSlapTrivia() {
     setSetup(true);
     setStatus("New game. Question progress is preserved by level.");
   };
-
-  const endPuzzle = useCallback(() => {
-    setPuzzleOpen(false);
-  }, []);
 
   const subtitle = useMemo(() => {
     if (setup || !activeLevel) return "Trivia showdown";
@@ -540,8 +528,6 @@ export function useSlapTrivia() {
     markWrong,
     roundResult,
     dismissRoundResult,
-    puzzleOpen,
-    endPuzzle,
     nextReader,
     undo,
     resetGame,
