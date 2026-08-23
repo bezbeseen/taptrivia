@@ -8,7 +8,7 @@ One player reads. The others compete. First slap gets the first answer. First to
 
 - Pick a question level, 3–8 players, and the winning score.
 - The reader shows the question, then the answer.
-- **+1 Correct** or **Wrong** takes over the screen with the result. Tap to continue.
+- **+1 Correct** or **Wrong** takes over the screen with the result. A correct answer hands the card to the next reader.
 - Almost every tap has a cartoon sound — kazoos, honks, slide whistles, sad trombones, and a ta-da when someone wins.
 - Wrong answers escalate per player: first miss −1, second −2, third −3, and so on.
 - The reader cannot score on their own question.

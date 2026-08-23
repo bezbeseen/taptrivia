@@ -285,7 +285,13 @@
     roundResultBox.className = "round-result " + tone;
     let html =
       '<div class="result-header"><div><div class="brand">SLAP 15</div><div class="result-reader">' +
-      (names[state.reader] ? names[state.reader] + " is still reading" : "Trivia showdown") +
+      (roundResult.won
+        ? "First to the winning score"
+        : roundResult.kind === "correct" && names.length
+          ? names[(state.reader + 1) % names.length] + " reads next"
+          : names[state.reader]
+            ? names[state.reader] + " is still reading"
+            : "Trivia showdown") +
       '</div></div><span class="result-tap">Tap to continue</span></div>';
     if (roundResult.playerIndex !== null) {
       html += '<span class="avatar-emoji">' + (roundResult.avatar || "🦊") + "</span>";
@@ -306,7 +312,14 @@
     if (roundResult.won) {
       html += '<div class="round-hint">First to the winning score. New night?</div>';
     }
-    html += '<span class="round-continue">' + roundResult.continueLabel + "</span>";
+    html += '<span class="round-continue">' + roundResult.continueLabel;
+    if (roundResult.kind === "correct" && !roundResult.won && names.length) {
+      html +=
+        '<span class="btn-sub">' +
+        names[(state.reader + 1) % names.length] +
+        "'s turn</span>";
+    }
+    html += "</span>";
     roundResultBox.innerHTML = html;
   }
 
@@ -318,13 +331,15 @@
     }
     const result = roundResult;
     hideRoundResult();
-    if (!(result.kind === "wrong" && result.allStumped)) playContinueSound();
     if (result.kind === "correct") {
+      playNextReaderSound();
       advanceQuestion();
+      state.reader = (state.reader + 1) % names.length;
       status.textContent = names[state.reader] + " reads. Press Show Question.";
       render();
       return;
     }
+    if (!(result.kind === "wrong" && result.allStumped)) playContinueSound();
     if (result.kind === "wrong" && result.allStumped) {
       state.multipleChoice = true;
       choices = buildChoices(currentQuestion());
@@ -453,7 +468,7 @@
       answer: q ? q.answer : null,
       won: won,
       allStumped: false,
-      continueLabel: won ? "New game" : "Next question",
+      continueLabel: won ? "New game" : "Next reader",
     };
     render();
   }

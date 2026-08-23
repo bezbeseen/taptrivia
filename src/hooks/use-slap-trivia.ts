@@ -352,9 +352,15 @@ export function useSlapTrivia() {
       answer: currentQuestion?.answer ?? null,
       won,
       allStumped: false,
-      continueLabel: won ? "New game" : "Next question",
+      continueLabel: won ? "New game" : "Next reader",
     });
-    setStatus(`${names[index]} answered correctly: +1 point.`);
+    setStatus(
+      won
+        ? `${names[index]} answered correctly: +1 point. That's the game.`
+        : `${names[index]} answered correctly: +1 point. ${
+            names[(state.reader + 1) % names.length] ?? "The next player"
+          } reads next.`
+    );
   };
 
   const markWrong = (index: number) => {
@@ -398,26 +404,29 @@ export function useSlapTrivia() {
     );
   };
 
+  const handOffToNextReader = (from: GameState) => {
+    const advanced = advanceQuestion(from, indexes);
+    const reader = names.length ? (from.reader + 1) % names.length : from.reader;
+    setIndexes(advanced.nextIndexes);
+    setState({ ...advanced.nextState, reader });
+    setConfirmOpen(false);
+    return reader;
+  };
+
   const dismissRoundResult = () => {
     if (!roundResult || roundResult.won) return;
     const result = roundResult;
-    if (result.won) {
-      resetGame();
+    setRoundResult(null);
+    if (result.kind === "correct") {
+      playNextReaderSound();
+      const reader = handOffToNextReader(state);
+      setStatus(
+        `${names[reader] ?? "The next reader"} reads. Press Show Question.`
+      );
       return;
     }
     if (!(result.kind === "wrong" && result.allStumped)) {
       playContinueSound();
-    }
-    setRoundResult(null);
-    if (result.kind === "correct") {
-      const advanced = advanceQuestion(state, indexes);
-      setIndexes(advanced.nextIndexes);
-      setState(advanced.nextState);
-      setConfirmOpen(false);
-      setStatus(
-        `${names[state.reader] ?? "The reader"} reads. Press Show Question.`
-      );
-      return;
     }
     if (result.kind === "wrong" && result.allStumped) {
       playMultipleChoiceSound();
@@ -430,11 +439,7 @@ export function useSlapTrivia() {
     if (state.winner || !activeLevel || !names.length || roundResult) return;
     playNextReaderSound();
     snapshot();
-    const advanced = advanceQuestion(state, indexes);
-    setIndexes(advanced.nextIndexes);
-    const reader = (state.reader + 1) % names.length;
-    setState({ ...advanced.nextState, reader });
-    setConfirmOpen(false);
+    const reader = handOffToNextReader(state);
     setStatus(`${names[reader]} reads. Everyone else may compete.`);
   };
 

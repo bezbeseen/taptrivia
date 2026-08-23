@@ -46,7 +46,13 @@ export function Slap15App() {
               <span className="logo-15">15</span>
             </div>
             <div className="result-reader">
-              {game.readerName ? `${game.readerName} is still reading` : "Trivia showdown"}
+              {result.won
+                ? "First to the winning score"
+                : result.kind === "correct" && game.nextReaderName
+                  ? `${game.nextReaderName} reads next`
+                  : game.readerName
+                    ? `${game.readerName} is still reading`
+                    : "Trivia showdown"}
             </div>
           </div>
           <span className="result-tap">Tap to continue</span>
@@ -86,7 +92,12 @@ export function Slap15App() {
           {result.won ? (
             <div className="round-hint">First to the winning score. New night?</div>
           ) : null}
-          <span className="round-continue">{result.continueLabel}</span>
+          <span className="round-continue">
+            {result.continueLabel}
+            {result.kind === "correct" && !result.won && game.nextReaderName ? (
+              <span className="btn-sub">{game.nextReaderName}&apos;s turn</span>
+            ) : null}
+          </span>
         </div>
       </div>
     );
@@ -131,6 +142,9 @@ export function Slap15App() {
               <li>
                 If nobody knows, hit Nobody knows — or wait until every
                 competitor misses — and the question becomes multiple choice.
+              </li>
+              <li>
+                After a correct answer, the next player becomes the reader.
               </li>
               <li>First player to reach the winning net points wins.</li>
               <li>Questions continue forward even after Reset Game.</li>
@@ -455,8 +469,9 @@ export function Slap15App() {
           {game.status}
         </div>
         <div className="rules">
-          Correct: +1. Wrongs escalate per player (−1, −2, −3…). The reader
-          cannot score. If nobody knows, it becomes multiple choice.
+          Correct: +1, then the next player reads. Wrongs escalate per player
+          (−1, −2, −3…). The reader cannot score. If nobody knows, it becomes
+          multiple choice.
         </div>
       </div>
     </div>

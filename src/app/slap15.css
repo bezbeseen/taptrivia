@@ -868,6 +868,12 @@
   box-shadow: 4px 5px 0 #1b1233;
 }
 
+.slap15 .round-continue .btn-sub {
+  font-family: var(--font-fredoka), "Fredoka", sans-serif;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
 .slap15 .round-result.win .round-continue {
   background: #fde68a;
   color: #111827;
