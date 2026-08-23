@@ -282,17 +282,22 @@
           ? String(roundResult.delta)
           : "";
     roundResultBox.hidden = false;
-    roundResultBox.className = "round-result " + tone;
+    roundResultBox.className =
+      "round-result " + tone + (roundResult.kind === "mc-correct" ? " picking" : "");
     let html =
       '<div class="result-header"><div><div class="brand">SLAP 15</div><div class="result-reader">' +
-      (roundResult.won
-        ? "First to the winning score"
-        : roundResult.kind === "correct" && names.length
-          ? names[(state.reader + 1) % names.length] + " reads next"
-          : names[state.reader]
-            ? names[state.reader] + " is still reading"
-            : "Trivia showdown") +
-      '</div></div><span class="result-tap">Tap to continue</span></div>';
+      (roundResult.kind === "mc-correct"
+        ? "Tap who scored"
+        : roundResult.won
+          ? "First to the winning score"
+          : roundResult.kind === "correct" && names.length
+            ? names[(state.reader + 1) % names.length] + " reads next"
+            : names[state.reader]
+              ? names[state.reader] + " is still reading"
+              : "Trivia showdown") +
+      '</div></div><span class="result-tap">' +
+      (roundResult.kind === "mc-correct" ? "Reader sits out" : "Tap to continue") +
+      "</span></div>";
     if (roundResult.playerIndex !== null) {
       html += '<span class="avatar-emoji">' + (roundResult.avatar || "🦊") + "</span>";
     }
@@ -312,19 +317,42 @@
     if (roundResult.won) {
       html += '<div class="round-hint">First to the winning score. New night?</div>';
     }
-    html += '<span class="round-continue">' + roundResult.continueLabel;
-    if (roundResult.kind === "correct" && !roundResult.won && names.length) {
-      html +=
-        '<span class="btn-sub">' +
-        names[(state.reader + 1) % names.length] +
-        "'s turn</span>";
+    if (roundResult.kind === "mc-correct") {
+      html += '<div class="who-got-it"><div class="who-got-it-label">Who got it?</div><div class="who-got-it-list">';
+      names.forEach((name, i) => {
+        if (i === state.reader) return;
+        html +=
+          '<button type="button" class="who-got-it-player" data-award="' +
+          i +
+          '"><span class="avatar-emoji">' +
+          (avatars[i] || "🦊") +
+          '</span><span class="who-got-it-name">' +
+          name +
+          '</span><span class="who-got-it-score">' +
+          state.scores[i] +
+          "</span></button>";
+      });
+      html += "</div></div>";
+    } else {
+      html += '<span class="round-continue">' + roundResult.continueLabel;
+      if (roundResult.kind === "correct" && !roundResult.won && names.length) {
+        html +=
+          '<span class="btn-sub">' +
+          names[(state.reader + 1) % names.length] +
+          "'s turn</span>";
+      }
+      html += "</span>";
     }
-    html += "</span>";
     roundResultBox.innerHTML = html;
   }
 
-  function dismissRoundResult() {
+  function dismissRoundResult(event) {
     if (!roundResult) return;
+    if (roundResult.kind === "mc-correct") {
+      const btn = event && event.target && event.target.closest("[data-award]");
+      if (btn) correct(Number(btn.getAttribute("data-award")));
+      return;
+    }
     if (roundResult.won) {
       root.querySelector("#reset").click();
       return;
@@ -447,7 +475,8 @@
   }
 
   function correct(i) {
-    if (i === state.reader || state.winner || roundResult) return;
+    if (i === state.reader || state.winner) return;
+    if (roundResult && roundResult.kind !== "mc-correct") return;
     snapshot();
     state.scores[i] += 1;
     state.answerVisible = true;
@@ -511,7 +540,7 @@
     if (choice.correct) {
       playCorrectSound();
       state.answerVisible = true;
-      status.textContent = "That's the one. Mark who got it.";
+      status.textContent = "That's the one. Tap who got it.";
       const q = currentQuestion();
       roundResult = {
         kind: "mc-correct",

@@ -785,11 +785,77 @@
   color: var(--gold);
 }
 
-.slap15 .round-result svg {
+.slap15 .round-result > svg {
   display: block;
   border-radius: 50%;
   box-shadow: 0 0 0 4px currentColor;
   margin-bottom: 8px;
+}
+
+.slap15 .round-result.picking {
+  cursor: default;
+  justify-content: flex-start;
+  overflow: auto;
+}
+
+.slap15 .round-result.picking .round-verdict {
+  font-size: clamp(40px, 11vw, 72px);
+}
+
+.slap15 .who-got-it {
+  width: min(560px, 94vw);
+  margin-top: 6px;
+}
+
+.slap15 .who-got-it-label {
+  font-family: var(--font-bungee), "Bungee", Impact, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  margin-bottom: 10px;
+}
+
+.slap15 .who-got-it-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.slap15 .who-got-it-player {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 68px;
+  padding: 10px 14px;
+  text-align: left;
+  background: var(--gold) !important;
+  color: #1b1233 !important;
+}
+
+.slap15 .who-got-it-player svg {
+  display: block;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px #1b1233;
+}
+
+.slap15 .who-got-it-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--font-bungee), "Bungee", Impact, sans-serif;
+  font-size: clamp(18px, 3.4vw, 22px);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.slap15 .who-got-it-score {
+  font-family: var(--font-bungee), "Bungee", Impact, sans-serif;
+  font-size: 22px;
+  font-weight: 400;
 }
 
 .slap15 .round-name {

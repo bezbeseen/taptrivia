@@ -304,7 +304,7 @@ export function useSlapTrivia() {
         allStumped: false,
         continueLabel: "Who got it?",
       });
-      setStatus("That's the one. Mark who got it.");
+      setStatus("That's the one. Tap who got it.");
       return;
     }
     playNopeSound();
@@ -328,7 +328,8 @@ export function useSlapTrivia() {
   };
 
   const markCorrect = (index: number) => {
-    if (index === state.reader || state.winner || roundResult) return;
+    if (index === state.reader || state.winner) return;
+    if (roundResult && roundResult.kind !== "mc-correct") return;
     snapshot();
     const scores = [...state.scores];
     scores[index] = (scores[index] ?? 0) + 1;

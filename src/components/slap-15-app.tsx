@@ -23,6 +23,7 @@ export function Slap15App() {
   const turnKicker = game.state.winner ? "Winner" : "Now reading";
 
   if (result) {
+    const pickingWinner = result.kind === "mc-correct";
     const tone =
       result.won
         ? "win"
@@ -36,6 +37,7 @@ export function Slap15App() {
         : "WRONG";
     const deltaText =
       result.delta > 0 ? `+${result.delta}` : result.delta < 0 ? String(result.delta) : null;
+    const dismiss = result.won ? game.resetGame : game.dismissRoundResult;
 
     return (
       <div className={`slap15 round-open ${tone}`}>
@@ -46,29 +48,36 @@ export function Slap15App() {
               <span className="logo-15">15</span>
             </div>
             <div className="result-reader">
-              {result.won
-                ? "First to the winning score"
-                : result.kind === "correct" && game.nextReaderName
-                  ? `${game.nextReaderName} reads next`
-                  : game.readerName
-                    ? `${game.readerName} is still reading`
-                    : "Trivia showdown"}
+              {pickingWinner
+                ? "Tap who scored"
+                : result.won
+                  ? "First to the winning score"
+                  : result.kind === "correct" && game.nextReaderName
+                    ? `${game.nextReaderName} reads next`
+                    : game.readerName
+                      ? `${game.readerName} is still reading`
+                      : "Trivia showdown"}
             </div>
           </div>
-          <span className="result-tap">Tap to continue</span>
+          <span className="result-tap">
+            {pickingWinner ? "Reader sits out" : "Tap to continue"}
+          </span>
         </header>
         <div
-          className={`round-result ${tone}`}
-          role="button"
-          tabIndex={0}
-          onClick={result.won ? game.resetGame : game.dismissRoundResult}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" || event.key === " ") {
-              event.preventDefault();
-              if (result.won) game.resetGame();
-              else game.dismissRoundResult();
-            }
-          }}
+          className={`round-result ${tone}${pickingWinner ? " picking" : ""}`}
+          role={pickingWinner ? undefined : "button"}
+          tabIndex={pickingWinner ? undefined : 0}
+          onClick={pickingWinner ? undefined : dismiss}
+          onKeyDown={
+            pickingWinner
+              ? undefined
+              : (event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    dismiss();
+                  }
+                }
+          }
         >
           {result.playerIndex !== null ? (
             <PlayerAvatar id={result.avatar} size={120} title={result.name} />
@@ -92,12 +101,41 @@ export function Slap15App() {
           {result.won ? (
             <div className="round-hint">First to the winning score. New night?</div>
           ) : null}
-          <span className="round-continue">
-            {result.continueLabel}
-            {result.kind === "correct" && !result.won && game.nextReaderName ? (
-              <span className="btn-sub">{game.nextReaderName}&apos;s turn</span>
-            ) : null}
-          </span>
+          {pickingWinner ? (
+            <div className="who-got-it">
+              <div className="who-got-it-label">Who got it?</div>
+              <div className="who-got-it-list">
+                {game.names.map((name, index) => {
+                  if (index === game.state.reader) return null;
+                  return (
+                    <button
+                      key={`${name}-${index}`}
+                      type="button"
+                      className="who-got-it-player"
+                      onClick={() => game.markCorrect(index)}
+                    >
+                      <PlayerAvatar
+                        id={game.avatars[index] ?? index}
+                        size={48}
+                        title={name}
+                      />
+                      <span className="who-got-it-name">{name}</span>
+                      <span className="who-got-it-score">
+                        {game.state.scores[index] ?? 0}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            <span className="round-continue">
+              {result.continueLabel}
+              {result.kind === "correct" && !result.won && game.nextReaderName ? (
+                <span className="btn-sub">{game.nextReaderName}&apos;s turn</span>
+              ) : null}
+            </span>
+          )}
         </div>
       </div>
     );

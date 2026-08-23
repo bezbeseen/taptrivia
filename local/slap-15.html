@@ -29,6 +29,15 @@
 #slap15 .result-header .brand{font-size:18px;font-weight:950}
 #slap15 .result-reader{font-size:15px;font-weight:800;opacity:.86}
 #slap15 .result-tap{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;opacity:.75}
+#slap15 .round-result.picking{cursor:default;justify-content:flex-start;overflow:auto}
+#slap15 .round-result.picking .round-verdict{font-size:clamp(40px,11vw,72px)}
+#slap15 .who-got-it{width:min(560px,94vw);margin-top:6px}
+#slap15 .who-got-it-label{font-size:16px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px}
+#slap15 .who-got-it-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+#slap15 .who-got-it-player{display:flex;align-items:center;gap:12px;width:100%;min-height:68px;padding:10px 14px;text-align:left;background:#fff;color:#111}
+#slap15 .who-got-it-player .avatar-emoji{font-size:36px;line-height:1}
+#slap15 .who-got-it-name{flex:1;min-width:0;font-size:20px;font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#slap15 .who-got-it-score{font-size:22px;font-weight:950}
 </style>
   <div class="wrap">
     <div class="top"><div><h1>SLAP 15</h1><div class="sub" id="gameSubtitle">Trivia showdown</div></div><button type="button" class="rules-btn" id="showRules">Rules</button></div>
@@ -901,17 +910,22 @@ var Slap15Sounds = (() => {
           ? String(roundResult.delta)
           : "";
     roundResultBox.hidden = false;
-    roundResultBox.className = "round-result " + tone;
+    roundResultBox.className =
+      "round-result " + tone + (roundResult.kind === "mc-correct" ? " picking" : "");
     let html =
       '<div class="result-header"><div><div class="brand">SLAP 15</div><div class="result-reader">' +
-      (roundResult.won
-        ? "First to the winning score"
-        : roundResult.kind === "correct" && names.length
-          ? names[(state.reader + 1) % names.length] + " reads next"
-          : names[state.reader]
-            ? names[state.reader] + " is still reading"
-            : "Trivia showdown") +
-      '</div></div><span class="result-tap">Tap to continue</span></div>';
+      (roundResult.kind === "mc-correct"
+        ? "Tap who scored"
+        : roundResult.won
+          ? "First to the winning score"
+          : roundResult.kind === "correct" && names.length
+            ? names[(state.reader + 1) % names.length] + " reads next"
+            : names[state.reader]
+              ? names[state.reader] + " is still reading"
+              : "Trivia showdown") +
+      '</div></div><span class="result-tap">' +
+      (roundResult.kind === "mc-correct" ? "Reader sits out" : "Tap to continue") +
+      "</span></div>";
     if (roundResult.playerIndex !== null) {
       html += '<span class="avatar-emoji">' + (roundResult.avatar || "🦊") + "</span>";
     }
@@ -931,19 +945,42 @@ var Slap15Sounds = (() => {
     if (roundResult.won) {
       html += '<div class="round-hint">First to the winning score. New night?</div>';
     }
-    html += '<span class="round-continue">' + roundResult.continueLabel;
-    if (roundResult.kind === "correct" && !roundResult.won && names.length) {
-      html +=
-        '<span class="btn-sub">' +
-        names[(state.reader + 1) % names.length] +
-        "'s turn</span>";
+    if (roundResult.kind === "mc-correct") {
+      html += '<div class="who-got-it"><div class="who-got-it-label">Who got it?</div><div class="who-got-it-list">';
+      names.forEach((name, i) => {
+        if (i === state.reader) return;
+        html +=
+          '<button type="button" class="who-got-it-player" data-award="' +
+          i +
+          '"><span class="avatar-emoji">' +
+          (avatars[i] || "🦊") +
+          '</span><span class="who-got-it-name">' +
+          name +
+          '</span><span class="who-got-it-score">' +
+          state.scores[i] +
+          "</span></button>";
+      });
+      html += "</div></div>";
+    } else {
+      html += '<span class="round-continue">' + roundResult.continueLabel;
+      if (roundResult.kind === "correct" && !roundResult.won && names.length) {
+        html +=
+          '<span class="btn-sub">' +
+          names[(state.reader + 1) % names.length] +
+          "'s turn</span>";
+      }
+      html += "</span>";
     }
-    html += "</span>";
     roundResultBox.innerHTML = html;
   }
 
-  function dismissRoundResult() {
+  function dismissRoundResult(event) {
     if (!roundResult) return;
+    if (roundResult.kind === "mc-correct") {
+      const btn = event && event.target && event.target.closest("[data-award]");
+      if (btn) correct(Number(btn.getAttribute("data-award")));
+      return;
+    }
     if (roundResult.won) {
       root.querySelector("#reset").click();
       return;
@@ -1066,7 +1103,8 @@ var Slap15Sounds = (() => {
   }
 
   function correct(i) {
-    if (i === state.reader || state.winner || roundResult) return;
+    if (i === state.reader || state.winner) return;
+    if (roundResult && roundResult.kind !== "mc-correct") return;
     snapshot();
     state.scores[i] += 1;
     state.answerVisible = true;
@@ -1130,7 +1168,7 @@ var Slap15Sounds = (() => {
     if (choice.correct) {
       playCorrectSound();
       state.answerVisible = true;
-      status.textContent = "That's the one. Mark who got it.";
+      status.textContent = "That's the one. Tap who got it.";
       const q = currentQuestion();
       roundResult = {
         kind: "mc-correct",
