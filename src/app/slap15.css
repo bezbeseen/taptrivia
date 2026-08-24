@@ -63,6 +63,23 @@
   text-shadow: 3px 4px 0 light-dark(#1b1233, #09060f);
 }
 
+.slap15 .logo-trivia {
+  display: grid;
+  place-items: center;
+  min-width: 92px;
+  height: 46px;
+  padding: 4px 10px 0;
+  background: var(--gold);
+  color: #1b1233;
+  border: 3px solid #1b1233;
+  border-radius: 16px;
+  font-family: var(--font-bungee), "Bungee", Impact, sans-serif;
+  font-size: 16px;
+  line-height: 1;
+  transform: rotate(-6deg);
+  box-shadow: 3px 4px 0 #1b1233;
+}
+
 .slap15 .logo-15 {
   display: grid;
   place-items: center;
@@ -303,6 +320,10 @@
   line-height: 1.28;
   min-height: 72px;
   letter-spacing: 0;
+}
+
+.slap15 .tap-qtext {
+  white-space: pre-line;
 }
 
 .slap15 .answer {
