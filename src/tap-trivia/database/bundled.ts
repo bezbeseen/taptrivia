@@ -6,24 +6,21 @@ export function fromBundled(difficulty: TapDifficulty): TapQuestion[] {
   const banks = loadQuestionBanks();
   const pool: TriviaQuestion[] = banks[difficulty] ?? [];
   return pool.map((item, index) => {
-    const options = [item.answer, ...(item.distractors ?? [])]
-      .map((value) => value.trim())
-      .filter(Boolean)
-      .slice(0, 4);
-    const type = detectQuestionType({
-      answer: item.answer,
-      options,
-    });
+    const distractors = (item.distractors ?? []).map((value) => value.trim()).filter(Boolean);
     return {
-      id: `bundled-${difficulty}-${index}`,
+      id: `table-${difficulty}-${index}`,
       sourceQuestion: item.question,
       question: item.question,
       answer: item.answer,
       category: item.category || "General Knowledge",
       difficulty,
-      type,
-      options: type === "multiple" ? options : [],
-      source: "Tap Trivia bundled library",
+      type: detectQuestionType({
+        answer: item.answer,
+        options: [],
+      }),
+      options: [],
+      distractors,
+      source: "This build",
     };
   });
 }

@@ -10,7 +10,8 @@ One player reads (or a host asks). The others compete. Correct is +1. Wrong is �
 - **Reader rotation** or **Host mode**.
 - 2–6 players. Default winning score depends on the table size (15 / 11 / 9 / 8 / 7).
 - All 12 categories are used. A category never appears twice in a row, and a repeat from the same category is spaced by at least 50 questions in that category’s pool.
-- Upload `Tap_Trivia_Question_Database.csv` to use Marc’s database (saved in this browser). If you skip that, the bundled library is used.
+- Two packaged banks: **This build** (spoken open answers) and **Marc pack** (same library in Marc’s CSV columns, A–D on the card). Upload `Tap_Trivia_Question_Database.csv` anytime as a third choice.
+- Open questions get **No one knows**, which turns the card into multiple choice. True/False and multiple choice are tapped on the card — no No one knows button.
 
 ## Run it
 

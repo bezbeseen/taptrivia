@@ -107,6 +107,14 @@
   color: inherit;
 }
 
+.slap15 .result-header .logo-trivia {
+  min-width: 72px;
+  height: 28px;
+  font-size: 12px;
+  border-width: 2px;
+  box-shadow: 2px 2px 0 #1b1233;
+}
+
 .slap15 .result-header .logo-15 {
   min-width: 36px;
   height: 34px;

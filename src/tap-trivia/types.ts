@@ -11,6 +11,7 @@ export type TapQuestion = {
   difficulty: TapDifficulty;
   type: TapQuestionType;
   options: string[];
+  distractors?: string[];
   source: string;
 };
 
@@ -20,6 +21,26 @@ export type TapState = {
   winner: number | null;
   questionVisible: boolean;
   answerVisible: boolean;
+  nobodyKnows: boolean;
+  eliminatedChoices: number[];
 };
+
+export type TapChoice = {
+  text: string;
+  correct: boolean;
+};
+
+export type TapRoundResult = {
+  kind: "correct" | "wrong" | "mc-correct" | "mc-wrong";
+  playerIndex: number | null;
+  name: string;
+  delta: number;
+  score: number;
+  answer: string | null;
+  won: boolean;
+  continueLabel: string;
+};
+
+export type BankId = "table" | "marc" | "upload";
 
 export type TypeFilter = Record<TapQuestionType, boolean>;

@@ -14,12 +14,17 @@ export {
 export { parseCsv, normalizeRow, normalizeCsv } from "./csv";
 export { TAP_CATEGORIES, buildQueue } from "./queue";
 export { fromBundled, allBundledQuestions } from "./bundled";
+export { marcPackQuestions } from "./marc-pack";
+export { buildPlayableChoices } from "./choices";
+export { BANKS, readSavedBank } from "./banks";
 export {
   databaseSize,
   databaseSource,
+  currentBank,
   questionTypeCounts,
   importCsvFile,
   clearSavedCsv,
+  selectBank,
   initDatabase,
 } from "./store";
 

@@ -1,4 +1,4 @@
-import type { TapMode, TapState } from "@/tap-trivia/types";
+import type { TapMode, TapQuestionType, TapState } from "@/tap-trivia/types";
 
 export const RULES = {
   correctDelta: 1,
@@ -50,10 +50,19 @@ export function nextReaderIndex(state: TapState, playerCount: number): number {
   return (state.reader + 1) % playerCount;
 }
 
+export function canShowNobodyKnows(type: TapQuestionType, nobodyKnows: boolean): boolean {
+  return type === "open" && !nobodyKnows;
+}
+
+export function showsChoices(type: TapQuestionType, nobodyKnows: boolean): boolean {
+  return type === "boolean" || type === "multiple" || nobodyKnows;
+}
+
 export const RULE_COPY = [
   `Correct: +${RULES.correctDelta}. Wrong: ${RULES.wrongDelta}.`,
   "All 12 categories rotate in.",
   `No category more than ${RULES.categoryMaxRun} times in a row.`,
   `Repeats from the same category stay at least ${RULES.categoryMinGap} questions apart in that category.`,
   "In reader rotation, the reader cannot score.",
+  "No one knows is only on open questions. True/False and multiple choice are tapped on the card.",
 ].join(" ");

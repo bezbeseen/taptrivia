@@ -2,7 +2,7 @@
 
 import { PlayerAvatar } from "@/components/player-avatar";
 import type { TapTriviaGame } from "@/hooks/use-tap-trivia";
-import { QUESTION_TYPES } from "@/tap-trivia/database";
+import { BANKS, QUESTION_TYPES } from "@/tap-trivia/database";
 import { RULE_COPY, defaultWinScore } from "@/tap-trivia/rules";
 import type { TapDifficulty, TapMode } from "@/tap-trivia/types";
 
@@ -126,8 +126,36 @@ export function SetupScreen({ game }: { game: TapTriviaGame }) {
       <div className="layer">
         <div className="layer-kicker">Database</div>
         <div className="layer-title">Question bank</div>
-        <div className="setup-field">
-          <label htmlFor="databaseFile">CSV file</label>
+        <div className="layer-note">
+          {game.dbCount
+            ? `${game.dbCount.toLocaleString()} questions from ${game.dbSource}.`
+            : "Pick a packaged bank, or upload Marc’s CSV."}
+        </div>
+        <div className="type-toggles">
+          {BANKS.map((item) => {
+            const on = game.bank === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                className={on ? "type-toggle on" : "type-toggle"}
+                aria-pressed={on}
+                disabled={game.importing}
+                onClick={() => void game.chooseBank(item.id)}
+              >
+                <span className="type-check" aria-hidden>
+                  {on ? "✓" : ""}
+                </span>
+                <span>
+                  <span className="type-label">{item.label}</span>
+                  <span className="type-hint">{item.hint}</span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+        <div className="setup-field" style={{ marginTop: 14 }}>
+          <label htmlFor="databaseFile">Upload a CSV</label>
           <input
             id="databaseFile"
             type="file"
@@ -138,21 +166,6 @@ export function SetupScreen({ game }: { game: TapTriviaGame }) {
               if (file) void game.importDatabase(file);
             }}
           />
-          <div className="seat-note" style={{ marginTop: 8 }}>
-            {game.dbCount
-              ? `${game.dbCount.toLocaleString()} questions from the ${game.dbSource}.`
-              : "Upload Tap_Trivia_Question_Database.csv, or play with the bundled library."}
-          </div>
-          {game.dbSource !== "bundled library" ? (
-            <button
-              type="button"
-              className="ghost-link"
-              disabled={game.importing}
-              onClick={() => void game.useBundledLibrary()}
-            >
-              Switch back to bundled library
-            </button>
-          ) : null}
         </div>
 
         <div className="layer-sub">Question type</div>
@@ -185,8 +198,8 @@ export function SetupScreen({ game }: { game: TapTriviaGame }) {
 
         <div className="layer-sub">Multiple choice</div>
         <div className="layer-note" style={{ marginBottom: 0 }}>
-          Multiple-choice cards shuffle four options and show them as A–D. True / False
-          always shows True and False. Open answers stay spoken — no choices on the card.
+          Tap a letter on True/False and multiple choice. Open answers stay spoken.
+          No one knows is only on those open cards — it turns them into A–D.
         </div>
       </div>
 

@@ -1,12 +1,17 @@
 "use client";
 
 import { useTapTrivia } from "@/hooks/use-tap-trivia";
+import { RoundOverlay } from "@/tap-trivia/ui/round-overlay";
 import { SetupScreen } from "@/tap-trivia/ui/setup-screen";
 import { TableScreen } from "@/tap-trivia/ui/table-screen";
 import "@/app/slap15.css";
 
 export function TapTriviaApp() {
   const game = useTapTrivia();
+
+  if (game.roundResult) {
+    return <RoundOverlay game={game} />;
+  }
 
   return (
     <div className="slap15">

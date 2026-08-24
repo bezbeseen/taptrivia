@@ -8,12 +8,20 @@ export function emptyPlayState(count = 0): TapState {
     winner: null,
     questionVisible: false,
     answerVisible: false,
+    nobodyKnows: false,
+    eliminatedChoices: [],
   };
 }
 
 export function revealQuestion(state: TapState): TapState {
   if (state.winner !== null) return state;
-  return { ...state, questionVisible: true, answerVisible: false };
+  return {
+    ...state,
+    questionVisible: true,
+    answerVisible: false,
+    nobodyKnows: false,
+    eliminatedChoices: [],
+  };
 }
 
 export function revealAnswer(state: TapState): TapState {
@@ -22,7 +30,26 @@ export function revealAnswer(state: TapState): TapState {
 }
 
 export function hideCard(state: TapState): TapState {
-  return { ...state, questionVisible: false, answerVisible: false };
+  return {
+    ...state,
+    questionVisible: false,
+    answerVisible: false,
+    nobodyKnows: false,
+    eliminatedChoices: [],
+  };
+}
+
+export function enableNobodyKnows(state: TapState): TapState {
+  if (state.winner !== null || !state.questionVisible || state.nobodyKnows) return state;
+  return { ...state, nobodyKnows: true };
+}
+
+export function eliminateChoice(state: TapState, choiceIndex: number): TapState {
+  if (state.eliminatedChoices.includes(choiceIndex)) return state;
+  return {
+    ...state,
+    eliminatedChoices: [...state.eliminatedChoices, choiceIndex],
+  };
 }
 
 export function applyScore(options: {
@@ -46,6 +73,7 @@ export function applyScore(options: {
     state: {
       ...state,
       scores,
+      answerVisible: delta > 0 ? true : state.answerVisible,
       winner: won ? playerIndex : null,
     },
   };
@@ -93,24 +121,4 @@ export function nextQuestionTurn(options: {
           : options.state.reader,
     },
   };
-}
-
-export function applyScoreDelta(options: {
-  state: TapState;
-  mode: TapMode;
-  playerIndex: number;
-  delta: number;
-  winTarget: number;
-  index: number;
-  lastIndex: number;
-}): { state: TapState; index: number; accepted: boolean; won: boolean } {
-  const scored = applyScore(options);
-  if (!scored.accepted) {
-    return { state: options.state, index: options.index, accepted: false, won: false };
-  }
-  if (options.delta > 0) {
-    const advanced = advanceRound(scored.state, options.index, options.lastIndex);
-    return { ...advanced, accepted: true, won: scored.won };
-  }
-  return { state: scored.state, index: options.index, accepted: true, won: scored.won };
 }

@@ -8,7 +8,9 @@ import { RULE_COPY } from "@/tap-trivia/rules";
 export function TableScreen({ game }: { game: TapTriviaGame }) {
   const question = game.currentQuestion;
   const typeLabel = question
-    ? QUESTION_TYPES.find((item) => item.id === question.type)?.label
+    ? game.state.nobodyKnows
+      ? "Multiple choice"
+      : QUESTION_TYPES.find((item) => item.id === question.type)?.label
     : null;
   const turnHint = game.state.winner !== null
     ? `${game.names[game.state.winner]} just took the game.`
@@ -16,11 +18,13 @@ export function TableScreen({ game }: { game: TapTriviaGame }) {
       ? "Tap Show Question when you're ready."
       : game.state.answerVisible
         ? "Mark who scored, then keep going."
-        : "Read it out. Then reveal the answer.";
+        : game.showChoiceButtons
+          ? "Read it out. Then tap a letter."
+          : "Read it out. Then reveal the answer — or No one knows.";
 
   return (
     <>
-      <section className="turn-banner">
+      <section className="turn-banner" key={`${game.state.reader}-${question?.id ?? "none"}`}>
         <PlayerAvatar
           id={game.mode === "host" ? 3 : game.state.reader}
           size={88}
@@ -39,7 +43,7 @@ export function TableScreen({ game }: { game: TapTriviaGame }) {
         </div>
       </section>
 
-      {game.state.answerVisible && question ? (
+      {game.state.answerVisible && question && !game.showChoiceButtons ? (
         <section className="score-strip" aria-live="polite">
           <div className="qmeta">
             {question.category}
@@ -57,17 +61,31 @@ export function TableScreen({ game }: { game: TapTriviaGame }) {
           <div className="qtext tap-qtext">
             {question?.sourceQuestion ?? "No question available."}
           </div>
-          {(question?.type === "multiple" || question?.type === "boolean") &&
-          question.options.length ? (
+          {game.showChoiceButtons && game.choices.length ? (
             <div className="choices">
-              {question.options.map((choice, index) => (
-                <div key={`${choice}-${index}`} className="choice">
-                  <span className="choice-letter">
-                    {String.fromCharCode(65 + index)}
-                  </span>
-                  {choice}
-                </div>
-              ))}
+              {game.choices.map((choice, index) => {
+                const out = game.state.eliminatedChoices.includes(index);
+                return (
+                  <button
+                    key={`${choice.text}-${index}`}
+                    type="button"
+                    className={out ? "choice out" : "choice"}
+                    disabled={out || game.state.winner !== null || game.state.answerVisible}
+                    onClick={() => game.pickChoice(index)}
+                  >
+                    <span className="choice-letter">
+                      {String.fromCharCode(65 + index)}
+                    </span>
+                    {choice.text}
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+          {game.state.answerVisible && question ? (
+            <div className="answer">
+              <span>Answer</span>
+              {question.answer}
             </div>
           ) : null}
           <div className="qbuttons">
@@ -75,10 +93,20 @@ export function TableScreen({ game }: { game: TapTriviaGame }) {
               type="button"
               className="primary"
               onClick={game.showAnswer}
-              disabled={game.state.winner !== null}
+              disabled={game.state.winner !== null || game.state.answerVisible}
             >
               Reveal answer
             </button>
+            {game.canNobodyKnows ? (
+              <button
+                type="button"
+                className="nobody"
+                onClick={game.nobodyKnows}
+                disabled={game.state.winner !== null}
+              >
+                No one knows
+              </button>
+            ) : null}
           </div>
         </section>
       ) : (
