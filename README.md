@@ -1,6 +1,8 @@
 # SLAP 15
 
-Party trivia from [the original SLAP 15 preview](https://raw.githack.com/bezbeseen/weddingmarking/slap-15-app/slap-15/preview.html).
+Play now: [open the public game](https://htmlpreview.github.io/?https://github.com/bezbeseen/taptrivia/blob/main/local/slap-15.html)
+
+Party trivia from [the original SLAP 15 preview](https://raw.githack.com/bezbeseen/weddingmarking/slap-15-app/slap-15/preview.html). After GitHub Pages is on, the pretty build lives at [bezbeseen.github.io/taptrivia](https://bezbeseen.github.io/taptrivia/).
 
 One player reads. The others compete. First slap gets the first answer. First to 15 net points (or whatever you set) wins.
 
@@ -42,6 +44,20 @@ The original trivia-only build also lives in [`local/`](local/README.md) if you 
 
 - Open **`local/slap-15.html`** in a browser — one file, question bank included.
 - Or serve the `local/` folder if you want the original `preview.html` split.
+
+## Public URL
+
+Share this while Marc is getting git working:
+
+**https://htmlpreview.github.io/?https://github.com/bezbeseen/taptrivia/blob/main/local/slap-15.html**
+
+For a cleaner permanent link, turn on GitHub Pages:
+
+1. Open [Pages settings](https://github.com/bezbeseen/taptrivia/settings/pages)
+2. Under **Build and deployment**, set Source to **GitHub Actions**
+3. Open [Actions](https://github.com/bezbeseen/taptrivia/actions) and run **GitHub Pages** if it does not start on its own
+
+Then the game is at **https://bezbeseen.github.io/taptrivia/**
 
 ## Next.js app
 

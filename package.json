@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev --port 43127",
     "build": "next build",
-    "start": "next start --port 43127",
+    "start": "npx --yes serve out --listen 43127",
     "lint": "eslint"
   },
   "dependencies": {
