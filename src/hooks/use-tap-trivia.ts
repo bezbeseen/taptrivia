@@ -241,15 +241,18 @@ export function useTapTrivia() {
       score: 0,
       answer: null,
       won: false,
-      continueLabel: "Try another",
+      continueLabel: "Who missed it?",
     });
-    setStatus("Nope. That choice is out. Try another.");
+    setStatus("Nope. That choice is out. Tap who missed it.");
   };
 
   const markScore = (playerIndex: number, delta: 1 | -1) => {
     if (state.winner !== null) return;
-    if (roundResult && roundResult.kind !== "mc-correct") return;
+    if (roundResult && roundResult.kind !== "mc-correct" && roundResult.kind !== "mc-wrong") {
+      return;
+    }
     if (roundResult?.kind === "mc-correct" && delta < 0) return;
+    if (roundResult?.kind === "mc-wrong" && delta > 0) return;
     snapshot(state);
     const result = applyScore({
       state,
@@ -263,8 +266,9 @@ export function useTapTrivia() {
     else if (delta > 0) playCorrectSound();
     else playWrongSound();
     setState(result.state);
+    const fromMcWrong = roundResult?.kind === "mc-wrong";
     setRoundResult({
-      kind: delta > 0 ? "correct" : "wrong",
+      kind: delta > 0 ? "correct" : fromMcWrong ? "mc-wrong" : "wrong",
       playerIndex,
       name: names[playerIndex] ?? `Player ${playerIndex + 1}`,
       delta,
@@ -277,7 +281,9 @@ export function useTapTrivia() {
           ? mode === "host"
             ? "Next question"
             : "Next reader"
-          : "Keep going",
+          : fromMcWrong
+            ? "Try another"
+            : "Keep going",
     });
     setStatus(
       `${names[playerIndex]} ${

@@ -990,6 +990,11 @@
   white-space: nowrap;
 }
 
+.slap15 .who-got-it-player.miss {
+  background: #fff5f7 !important;
+  color: #9f1239 !important;
+}
+
 .slap15 .who-got-it-score {
   font-family: var(--font-bungee), "Bungee", Impact, sans-serif;
   font-size: 22px;

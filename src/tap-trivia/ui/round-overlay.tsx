@@ -9,6 +9,8 @@ export function RoundOverlay({ game }: { game: TapTriviaGame }) {
   if (!result) return null;
 
   const pickingWinner = result.kind === "mc-correct";
+  const pickingMiss = result.kind === "mc-wrong" && result.playerIndex === null;
+  const picking = pickingWinner || pickingMiss;
   const tone = result.won ? "win" : result.kind === "correct" || result.kind === "mc-correct"
     ? "correct"
     : "wrong";
@@ -32,26 +34,28 @@ export function RoundOverlay({ game }: { game: TapTriviaGame }) {
           <div className="result-reader">
             {pickingWinner
               ? "Tap who scored"
-              : result.won
-                ? "First to the winning score"
-                : result.kind === "correct" && game.nextName
-                  ? `${game.nextName} reads next`
-                  : game.readerName
-                    ? `${game.readerName} is still reading`
-                    : "Tap Trivia"}
+              : pickingMiss
+                ? "Tap who missed"
+                : result.won
+                  ? "First to the winning score"
+                  : result.kind === "correct" && game.nextName
+                    ? `${game.nextName} reads next`
+                    : game.readerName
+                      ? `${game.readerName} is still reading`
+                      : "Tap Trivia"}
           </div>
         </div>
         <span className="result-tap">
-          {pickingWinner ? "Reader sits out" : "Tap to continue"}
+          {picking ? "Reader sits out" : "Tap to continue"}
         </span>
       </header>
       <div
-        className={`round-result ${tone}${pickingWinner ? " picking" : ""}`}
-        role={pickingWinner ? undefined : "button"}
-        tabIndex={pickingWinner ? undefined : 0}
-        onClick={pickingWinner ? undefined : dismiss}
+        className={`round-result ${tone}${picking ? " picking" : ""}`}
+        role={picking ? undefined : "button"}
+        tabIndex={picking ? undefined : 0}
+        onClick={picking ? undefined : dismiss}
         onKeyDown={
-          pickingWinner
+          picking
             ? undefined
             : (event) => {
                 if (event.key === "Enter" || event.key === " ") {
@@ -77,15 +81,19 @@ export function RoundOverlay({ game }: { game: TapTriviaGame }) {
           </div>
         ) : result.kind === "wrong" ? (
           <div className="round-hint">Answer stays hidden. Someone else can steal.</div>
+        ) : result.kind === "mc-wrong" && pickingMiss ? (
+          <div className="round-hint">That choice is out. Tap who said it: −1.</div>
         ) : result.kind === "mc-wrong" ? (
-          <div className="round-hint">That choice is out. Pick another.</div>
+          <div className="round-hint">That choice is out. Try another letter.</div>
         ) : null}
         {result.won ? (
           <div className="round-hint">First to the winning score. New night?</div>
         ) : null}
-        {pickingWinner ? (
+        {picking ? (
           <div className="who-got-it">
-            <div className="who-got-it-label">Who got it?</div>
+            <div className="who-got-it-label">
+              {pickingMiss ? "Who missed it?" : "Who got it?"}
+            </div>
             <div className="who-got-it-list">
               {game.names.map((name, index) => {
                 if (!canPlayerScore(game.mode, game.state.reader, index)) return null;
@@ -93,13 +101,14 @@ export function RoundOverlay({ game }: { game: TapTriviaGame }) {
                   <button
                     key={`${name}-${index}`}
                     type="button"
-                    className="who-got-it-player"
-                    onClick={() => game.markScore(index, 1)}
+                    className={pickingMiss ? "who-got-it-player miss" : "who-got-it-player"}
+                    onClick={() => game.markScore(index, pickingMiss ? -1 : 1)}
                   >
                     <PlayerAvatar id={index} size={48} title={name} />
                     <span className="who-got-it-name">{name}</span>
                     <span className="who-got-it-score">
                       {game.state.scores[index] ?? 0}
+                      {pickingMiss ? " · −1" : " · +1"}
                     </span>
                   </button>
                 );
