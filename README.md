@@ -27,3 +27,15 @@ npm start
 ```
 
 Marc’s original files are still in the repo root: `index.html`, `question-engine-v2.js`.
+
+## Isolated layers
+
+These four pieces are separate so one can change without rewriting the others:
+
+- **UI** — `src/tap-trivia/ui/` (setup panels + table screen)
+- **Gameplay** — `src/tap-trivia/gameplay.ts` (show/hide the card, score, next question)
+- **Rules** — `src/tap-trivia/rules.ts` (+1 / −1, who can score, win target)
+- **Database** — `src/tap-trivia/database/`
+  - `question-types.ts` — open, true/false, multiple choice
+  - `multiple-choice.ts` — how A–D and True/False are presented
+  - CSV parse, IndexedDB store, and the category queue

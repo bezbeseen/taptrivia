@@ -2,107 +2,77 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
-  DEFAULT_WIN_SCORE,
+  ALL_TYPES_ON,
+  QUESTION_TYPES,
+  clearSavedCsv,
   databaseSize,
   databaseSource,
   importCsvFile,
   initDatabase,
   loadTapQueue,
-  type TapDifficulty,
-  type TapMode,
-  type TapQuestion,
-} from "@/lib/tap-trivia-engine";
-
-export type TapState = {
-  scores: number[];
-  reader: number;
-  winner: number | null;
-  questionVisible: boolean;
-  answerVisible: boolean;
-};
+  questionTypeCounts,
+} from "@/tap-trivia/database";
+import {
+  applyScoreDelta,
+  emptyPlayState,
+  nextQuestionTurn,
+  revealAnswer,
+  revealQuestion,
+} from "@/tap-trivia/gameplay";
+import {
+  DEFAULT_WIN_SCORE,
+  RULES,
+  clampPlayerCount,
+  clampWinScore,
+  defaultWinScore,
+} from "@/tap-trivia/rules";
+import type {
+  TapDifficulty,
+  TapMode,
+  TapQuestion,
+  TapQuestionType,
+  TapState,
+  TypeFilter,
+} from "@/tap-trivia/types";
+import { playCorrect, playWinner, playWrong } from "@/tap-trivia/ui/sounds";
 
 const DEFAULT_NAMES = ["Bez", "Sean", "Marc", "Player 4", "Player 5", "Player 6"];
-
-function emptyState(count = 0): TapState {
-  return {
-    scores: Array(count).fill(0),
-    reader: 0,
-    winner: null,
-    questionVisible: false,
-    answerVisible: false,
-  };
-}
-
-function playTone(
-  freq: number,
-  start: number,
-  duration: number,
-  volume = 0.16,
-  type: OscillatorType = "sine",
-  endFreq: number | null = null
-) {
-  const Ctor = window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-  if (!Ctor) return;
-  const ctx = new Ctor();
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.type = type;
-  osc.frequency.setValueAtTime(freq, ctx.currentTime + start);
-  if (endFreq) {
-    osc.frequency.exponentialRampToValueAtTime(endFreq, ctx.currentTime + start + duration);
-  }
-  gain.gain.setValueAtTime(0.0001, ctx.currentTime + start);
-  gain.gain.exponentialRampToValueAtTime(volume, ctx.currentTime + start + 0.015);
-  gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + start + duration);
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  osc.start(ctx.currentTime + start);
-  osc.stop(ctx.currentTime + start + duration + 0.02);
-}
-
-function playCorrect() {
-  playTone(880, 0, 0.14, 0.18);
-  playTone(1175, 0.18, 0.18, 0.18);
-  playTone(1568, 0.39, 0.26, 0.2);
-}
-
-function playWrong() {
-  playTone(260, 0, 0.22, 0.2, "sawtooth", 190);
-  playTone(190, 0.2, 0.25, 0.18, "sawtooth", 125);
-  playTone(125, 0.42, 0.38, 0.16, "sawtooth", 72);
-}
-
-function playWinner() {
-  const notes = [523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5, 1318.51];
-  notes.forEach((freq, index) => {
-    playTone(freq, index * 0.13, index === notes.length - 1 ? 0.55 : 0.2, 0.19, "triangle");
-  });
-}
 
 export function useTapTrivia() {
   const [setup, setSetup] = useState(true);
   const [difficulty, setDifficulty] = useState<TapDifficulty | "">("");
   const [mode, setMode] = useState<TapMode>("rotation");
   const [playerCount, setPlayerCount] = useState(3);
-  const [winTarget, setWinTarget] = useState(DEFAULT_WIN_SCORE[3] ?? 11);
+  const [winTarget, setWinTarget] = useState(defaultWinScore(3));
   const [hostName, setHostName] = useState("Host");
   const [draftNames, setDraftNames] = useState(() => DEFAULT_NAMES.slice());
   const [names, setNames] = useState<string[]>([]);
   const [queue, setQueue] = useState<TapQuestion[]>([]);
   const [index, setIndex] = useState(0);
-  const [state, setState] = useState<TapState>(emptyState());
+  const [state, setState] = useState<TapState>(emptyPlayState());
   const [history, setHistory] = useState<string[]>([]);
   const [status, setStatus] = useState("Choose settings and press Let's play.");
   const [loading, setLoading] = useState(false);
   const [dbCount, setDbCount] = useState(0);
   const [dbSource, setDbSource] = useState("bundled library");
+  const [typeCounts, setTypeCounts] = useState<Record<TapQuestionType, number>>({
+    open: 0,
+    boolean: 0,
+    multiple: 0,
+  });
+  const [types, setTypes] = useState<TypeFilter>(ALL_TYPES_ON);
   const [importing, setImporting] = useState(false);
+
+  const refreshDatabaseMeta = () => {
+    setDbCount(databaseSize());
+    setDbSource(databaseSource());
+    setTypeCounts(questionTypeCounts());
+  };
 
   useEffect(() => {
     void initDatabase((message) => setStatus(message))
       .then(() => {
-        setDbCount(databaseSize());
-        setDbSource(databaseSource());
+        refreshDatabaseMeta();
         setStatus(`${databaseSize().toLocaleString()} questions ready from the ${databaseSource()}.`);
       })
       .catch((error: unknown) => {
@@ -120,24 +90,45 @@ export function useTapTrivia() {
   };
 
   const setPlayerCountSafe = (count: number) => {
-    const next = Math.max(2, Math.min(6, count));
+    const next = clampPlayerCount(count);
     setPlayerCount(next);
-    setWinTarget(DEFAULT_WIN_SCORE[next] ?? 11);
+    setWinTarget(defaultWinScore(next));
   };
 
   const setDraftName = (playerIndex: number, value: string) => {
     setDraftNames((prev) => prev.map((name, i) => (i === playerIndex ? value : name)));
   };
 
+  const toggleType = (key: TapQuestionType) => {
+    setTypes((prev) => {
+      const next = { ...prev, [key]: !prev[key] };
+      if (!QUESTION_TYPES.some((item) => next[item.id])) return prev;
+      return next;
+    });
+  };
+
   const importDatabase = async (file: File) => {
     setImporting(true);
     try {
       const count = await importCsvFile(file, (message) => setStatus(message));
-      setDbCount(count);
+      refreshDatabaseMeta();
       setDbSource(file.name);
       setStatus(`${count.toLocaleString()} questions are ready and saved on this browser.`);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Could not import that file.");
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const useBundledLibrary = async () => {
+    setImporting(true);
+    try {
+      await clearSavedCsv();
+      refreshDatabaseMeta();
+      setStatus(
+        `${databaseSize().toLocaleString()} bundled questions ready. Upload a CSV anytime to switch.`
+      );
     } finally {
       setImporting(false);
     }
@@ -148,6 +139,7 @@ export function useTapTrivia() {
     try {
       const nextQueue = await loadTapQueue({
         difficulty,
+        types,
         onStatus: (message) => setStatus(message),
       });
       const count = playerCount;
@@ -155,12 +147,12 @@ export function useTapTrivia() {
         const value = draftNames[i]?.trim();
         return value || `Player ${i + 1}`;
       });
-      const target = Math.max(1, Math.min(99, winTarget || DEFAULT_WIN_SCORE[count] || 11));
+      const target = clampWinScore(winTarget || defaultWinScore(count));
       setQueue(nextQueue);
       setIndex(0);
       setNames(nextNames);
       setWinTarget(target);
-      setState(emptyState(count));
+      setState(emptyPlayState(count));
       setHistory([]);
       setSetup(false);
       setStatus(
@@ -175,40 +167,32 @@ export function useTapTrivia() {
 
   const showQuestion = () => {
     if (!currentQuestion || state.winner !== null) return;
-    setState((prev) => ({ ...prev, questionVisible: true, answerVisible: false }));
+    setState((prev) => revealQuestion(prev));
   };
 
   const showAnswer = () => {
     if (!currentQuestion || !state.questionVisible || state.winner !== null) return;
-    setState((prev) => ({ ...prev, answerVisible: true }));
-  };
-
-  const advance = (from: TapState) => {
-    const nextIndex = index < queue.length - 1 ? index + 1 : index;
-    setIndex(nextIndex);
-    return {
-      ...from,
-      questionVisible: false,
-      answerVisible: false,
-    };
+    setState((prev) => revealAnswer(prev));
   };
 
   const markScore = (playerIndex: number, delta: 1 | -1) => {
     if (state.winner !== null) return;
-    if (mode === "rotation" && playerIndex === state.reader) return;
     snapshot(state);
-    const scores = [...state.scores];
-    scores[playerIndex] = (scores[playerIndex] ?? 0) + delta;
-    const won = delta > 0 && (scores[playerIndex] ?? 0) >= winTarget;
-    if (won) playWinner();
+    const result = applyScoreDelta({
+      state,
+      mode,
+      playerIndex,
+      delta,
+      winTarget,
+      index,
+      lastIndex: Math.max(0, queue.length - 1),
+    });
+    if (!result.accepted) return;
+    if (result.won) playWinner();
     else if (delta > 0) playCorrect();
     else playWrong();
-    const nextState: TapState = {
-      ...state,
-      scores,
-      winner: won ? playerIndex : null,
-    };
-    setState(delta > 0 ? advance(nextState) : nextState);
+    setIndex(result.index);
+    setState(result.state);
     setStatus(
       `${names[playerIndex]} ${
         delta > 0 ? "answered correctly: +1 point." : "answered incorrectly: −1 point."
@@ -219,16 +203,19 @@ export function useTapTrivia() {
   const nextReader = () => {
     if (!queue.length || state.winner !== null) return;
     snapshot(state);
-    const advanced = advance(state);
-    const reader =
-      mode === "rotation" && names.length
-        ? (state.reader + 1) % names.length
-        : state.reader;
-    setState({ ...advanced, reader });
+    const next = nextQuestionTurn({
+      state,
+      mode,
+      playerCount: names.length,
+      index,
+      lastIndex: Math.max(0, queue.length - 1),
+    });
+    setIndex(next.index);
+    setState(next.state);
     setStatus(
       mode === "host"
         ? `${hostName.trim() || "Host"} asks the next question.`
-        : `${names[reader]} reads next.`
+        : `${names[next.state.reader]} reads next.`
     );
   };
 
@@ -248,7 +235,7 @@ export function useTapTrivia() {
     setQueue([]);
     setIndex(0);
     setNames([]);
-    setState(emptyState());
+    setState(emptyPlayState());
     setHistory([]);
     setStatus(
       dbCount
@@ -291,11 +278,15 @@ export function useTapTrivia() {
     importing,
     dbCount,
     dbSource,
+    typeCounts,
+    types,
+    toggleType,
     subtitle,
     readerName,
     nextName,
     historyLength: history.length,
     importDatabase,
+    useBundledLibrary,
     startGame,
     showQuestion,
     showAnswer,
@@ -303,5 +294,11 @@ export function useTapTrivia() {
     nextReader,
     undo,
     resetGame,
+    minPlayers: RULES.minPlayers,
+    maxPlayers: RULES.maxPlayers,
+    defaultWinByCount: DEFAULT_WIN_SCORE,
+    ruleCopy: RULES,
   };
 }
+
+export type TapTriviaGame = ReturnType<typeof useTapTrivia>;
