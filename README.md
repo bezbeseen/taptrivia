@@ -1,8 +1,6 @@
 # SLAP 15
 
-Play now: [open the public game](https://htmlpreview.github.io/?https://github.com/bezbeseen/taptrivia/blob/main/local/slap-15.html)
-
-Party trivia from [the original SLAP 15 preview](https://raw.githack.com/bezbeseen/weddingmarking/slap-15-app/slap-15/preview.html). After GitHub Pages is on, the pretty build lives at [bezbeseen.github.io/taptrivia](https://bezbeseen.github.io/taptrivia/).
+Party trivia from [the original SLAP 15 preview](https://raw.githack.com/bezbeseen/weddingmarking/slap-15-app/slap-15/preview.html). The current game-show build is the Next.js app. `local/slap-15.html` is the older table UI.
 
 One player reads. The others compete. First slap gets the first answer. First to 15 net points (or whatever you set) wins.
 
