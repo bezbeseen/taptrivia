@@ -1,62 +1,42 @@
-# SLAP 15
+# Tap Trivia
 
-Party trivia from [the original SLAP 15 preview](https://raw.githack.com/bezbeseen/weddingmarking/slap-15-app/slap-15/preview.html).
+Pulled from [github.com/bezbeseen/taptrivia](https://github.com/bezbeseen/taptrivia) — Marc’s Tap Trivia build, now a Next.js table app.
 
-One player reads. The others compete. First slap gets the first answer. First to 15 net points (or whatever you set) wins.
+One player reads (or a host asks). The others compete. Correct is +1. Wrong is −1.
 
 ## How it plays
 
-- Pick a question level, 3–8 players, and the winning score.
-- The reader shows the question, then the answer.
-- **+1 Correct** or **Wrong** takes over the screen with the result. A correct answer hands the card to the next reader.
-- Almost every tap has a cartoon sound — kazoos, honks, slide whistles, sad trombones, and a ta-da when someone wins.
-- Wrong answers escalate per player: first miss −1, second −2, third −3, and so on.
-- The reader cannot score on their own question.
-- If nobody knows, it becomes multiple choice. The correct-choice screen lists the other players so you can tap who scored.
-- **Next Reader** rotates the card. **Undo Last** reverses the last score. **Reset Game** starts a new night but keeps each level’s question position.
+- Easy, Medium, or Hard.
+- **Reader rotation** or **Host mode**.
+- 2–6 players. Default winning score depends on the table size (15 / 11 / 9 / 8 / 7).
+- All 12 categories are used. A category never appears twice in a row, and a repeat from the same category is spaced by at least 50 questions in that category’s pool.
+- Two packaged banks: **This build** (spoken open answers) and **Marc pack** (same library in Marc’s CSV columns, A–D on the card). Upload `Tap_Trivia_Question_Database.csv` anytime as a third choice.
+- Open questions get **No one knows**, which turns the card into multiple choice. True/False and multiple choice are tapped on the card — no No one knows button.
 
-Question progress is stored in this browser by level.
-
-## Question library
-
-A few thousand unique questions, written to be read out loud. Easy, Medium, Hard, and Smart AF are real difficulty bands — Mix weaves all four together.
-
-Sources:
-
-- A curated party pack of short-answer trivia
-- [The Trivia API](https://the-trivia-api.com)
-- [Open Trivia Database](https://opentdb.com)
-- The original SLAP 15 bank, cleaned up
-
-Rebuild the merged file with:
-
-```bash
-python3 scripts/build-question-bank.py
-```
-
-That writes `src/data/questions.json`. Multiple-choice steal rounds prefer each question’s own wrong answers, then other answers from the same category.
-
-## Local copy (no server required)
-
-The original trivia-only build also lives in [`local/`](local/README.md) if you want a single HTML file.
-
-- Open **`local/slap-15.html`** in a browser — one file, question bank included.
-- Or serve the `local/` folder if you want the original `preview.html` split.
-
-## Next.js app
+## Run it
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open [http://127.0.0.1:43127](http://127.0.0.1:43127). On an iPad, Add to Home Screen keeps it full-bleed for the table.
+Open [http://127.0.0.1:43127](http://127.0.0.1:43127).
 
 ```bash
 npm run build
 npm start
 ```
 
-## Stack
+Marc’s original files are still in the repo root: `index.html`, `question-engine-v2.js`.
 
-Next.js, TypeScript, Tailwind CSS, and shadcn/ui.
+## Isolated layers
+
+These four pieces are separate so one can change without rewriting the others:
+
+- **UI** — `src/tap-trivia/ui/` (setup panels + table screen)
+- **Gameplay** — `src/tap-trivia/gameplay.ts` (show/hide the card, score, next question)
+- **Rules** — `src/tap-trivia/rules.ts` (+1 / −1, who can score, win target)
+- **Database** — `src/tap-trivia/database/`
+  - `question-types.ts` — open, true/false, multiple choice
+  - `multiple-choice.ts` — how A–D and True/False are presented
+  - CSV parse, IndexedDB store, and the category queue

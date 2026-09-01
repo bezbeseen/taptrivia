@@ -63,6 +63,23 @@
   text-shadow: 3px 4px 0 light-dark(#1b1233, #09060f);
 }
 
+.slap15 .logo-trivia {
+  display: grid;
+  place-items: center;
+  min-width: 92px;
+  height: 46px;
+  padding: 4px 10px 0;
+  background: var(--gold);
+  color: #1b1233;
+  border: 3px solid #1b1233;
+  border-radius: 16px;
+  font-family: var(--font-bungee), "Bungee", Impact, sans-serif;
+  font-size: 16px;
+  line-height: 1;
+  transform: rotate(-6deg);
+  box-shadow: 3px 4px 0 #1b1233;
+}
+
 .slap15 .logo-15 {
   display: grid;
   place-items: center;
@@ -88,6 +105,14 @@
   font-size: 28px;
   text-shadow: 2px 2px 0 rgb(0 0 0 / 0.25);
   color: inherit;
+}
+
+.slap15 .result-header .logo-trivia {
+  min-width: 72px;
+  height: 28px;
+  font-size: 12px;
+  border-width: 2px;
+  box-shadow: 2px 2px 0 #1b1233;
 }
 
 .slap15 .result-header .logo-15 {
@@ -286,6 +311,115 @@
   color: #1b1233;
 }
 
+.slap15 .layer {
+  margin-top: 16px;
+  padding: 14px;
+  border: 3px solid var(--ink);
+  border-radius: 18px;
+  background: var(--muted);
+}
+
+.slap15 .layer-kicker {
+  font-family: var(--font-bungee), "Bungee", Impact, sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--grape);
+}
+
+.slap15 .layer-title {
+  font-size: 22px;
+  font-weight: 750;
+  margin: 2px 0 8px;
+}
+
+.slap15 .layer-note {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.4;
+  opacity: 0.8;
+  margin-bottom: 12px;
+}
+
+.slap15 .layer-sub {
+  font-family: var(--font-bungee), "Bungee", Impact, sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin: 16px 0 8px;
+}
+
+.slap15 .type-toggles {
+  display: grid;
+  gap: 8px;
+}
+
+.slap15 .type-toggle {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: start;
+  text-align: left;
+  min-height: 0;
+  padding: 12px;
+  border: 3px solid var(--ink);
+  border-radius: 14px;
+  background: var(--card);
+  color: inherit;
+  box-shadow: 3px 3px 0 var(--ink);
+  opacity: 1;
+}
+
+.slap15 .type-toggle.on {
+  background: var(--gold);
+  color: #1b1233;
+}
+
+.slap15 .type-label {
+  display: block;
+  font-family: var(--font-bungee), "Bungee", Impact, sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+}
+
+.slap15 .type-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.slap15 .type-check {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 3px solid var(--ink);
+  border-radius: 6px;
+  background: #fff;
+  color: #1b1233;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.slap15 .ghost-link {
+  margin-top: 10px;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+  color: inherit;
+  text-decoration: underline;
+  font-size: 15px;
+  font-weight: 700;
+  opacity: 0.78;
+}
+
 .slap15 .qmeta {
   font-family: var(--font-bungee), "Bungee", Impact, sans-serif;
   font-size: 14px;
@@ -303,6 +437,10 @@
   line-height: 1.28;
   min-height: 72px;
   letter-spacing: 0;
+}
+
+.slap15 .tap-qtext {
+  white-space: pre-line;
 }
 
 .slap15 .answer {
@@ -850,6 +988,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.slap15 .who-got-it-player.miss {
+  background: #fff5f7 !important;
+  color: #9f1239 !important;
 }
 
 .slap15 .who-got-it-score {

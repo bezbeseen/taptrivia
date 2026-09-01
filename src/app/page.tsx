@@ -1,5 +1,5 @@
-import { Slap15App } from "@/components/slap-15-app";
+import { TapTriviaApp } from "@/components/tap-trivia-app";
 
 export default function Home() {
-  return <Slap15App />;
+  return <TapTriviaApp />;
 }

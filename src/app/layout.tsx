@@ -14,12 +14,12 @@ const fredoka = Fredoka({
 });
 
 export const metadata: Metadata = {
-  title: "SLAP 15",
+  title: "Tap Trivia",
   description:
-    "Trivia showdown. One player reads, the others slap in. First to 15 net points wins.",
+    "Marc’s Tap Trivia. Reader rotation or host mode. +1 correct, −1 wrong.",
   appleWebApp: {
     capable: true,
-    title: "SLAP 15",
+    title: "Tap Trivia",
     statusBarStyle: "black-translucent",
   },
   formatDetection: {
