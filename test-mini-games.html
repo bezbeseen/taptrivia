@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Tap Trivia Mini-Game Test</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#171022;color:#fff;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.wrap{max-width:980px;margin:auto;padding:22px}.top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap}.brand{font-size:44px;font-weight:950;letter-spacing:-.04em}.sub{opacity:.76;font-weight:700}.panel,.player{background:#241936;border:1px solid #493563;border-radius:20px;padding:18px}.panel{margin:18px 0}.setup{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.field{display:grid;gap:6px}.field label{font-weight:850}.field input,.field select{min-height:48px;border-radius:12px;border:1px solid #68527f;background:#140e20;color:#fff;padding:10px;font:inherit}.names{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px}.players{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}.player.reading{outline:3px solid #fff}.name{text-align:center;font-size:22px;font-weight:900}.score{text-align:center;font-size:58px;font-weight:950;margin:12px 0}.buttons,.actions{display:flex;gap:10px;flex-wrap:wrap}.buttons{display:grid}.qmeta{font-size:14px;font-weight:900;opacity:.72;text-transform:uppercase;letter-spacing:.08em}.qtext{font-size:clamp(24px,4vw,38px);font-weight:900;line-height:1.15;min-height:92px;margin-top:12px}.answer{margin-top:14px;padding:14px;border-radius:13px;background:#37294a;font-size:22px;font-weight:900}.status{margin-top:16px;padding:14px 16px;border-radius:14px;background:#2e2140;font-weight:750}.hidden{display:none!important}button{border:0;border-radius:14px;min-height:50px;padding:11px 16px;font:inherit;font-weight:900;cursor:pointer}.primary{background:#fff;color:#171022}.secondary{background:#493563;color:#fff}.correct{background:#15803d;color:#fff}.wrong{background:#b42318;color:#fff}.mini{background:#f59e0b;color:#241500}.winner{font-size:28px;font-weight:950;text-align:center;padding:20px;background:#15803d;border-radius:18px;margin:18px 0}@media(max-width:680px){.setup,.names{grid-template-columns:1fr}.wrap{padding:14px}.brand{font-size:36px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><div><div class="brand">TAP TRIVIA</div><div class="sub">Mini-game integration test · marc branch</div></div><button id="testMini" class="mini" type="button" disabled>Launch Mini Game</button></div>
+
+  <section id="setupPanel" class="panel">
+    <div class="qmeta">Game setup</div>
+    <div class="setup">
+      <div class="field"><label for="difficulty">Difficulty</label><select id="difficulty"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option><option value="smart">Smart</option></select></div>
+      <div class="field"><label for="playerCount">Players</label><select id="playerCount"><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option></select></div>
+      <div class="field"><label for="winScore">Points to win</label><input id="winScore" type="number" min="1" max="99" value="11"></div>
+    </div>
+    <div id="nameFields" class="names"></div>
+    <div class="actions" style="margin-top:14px"><button id="startGame" class="primary" type="button">Start Game</button></div>
+  </section>
+
+  <section id="gamePanel" class="panel hidden">
+    <div id="qmeta" class="qmeta">Ready</div>
+    <div id="qtext" class="qtext">Press Show Question.</div>
+    <div id="answer" class="answer hidden"></div>
+    <div class="actions">
+      <button id="showQuestion" class="primary" type="button">Show Question</button>
+      <button id="showAnswer" class="secondary" type="button" disabled>Reveal Answer</button>
+      <button id="nextQuestion" class="secondary" type="button">Next Reader</button>
+    </div>
+  </section>
+
+  <div id="players" class="players"></div>
+  <div id="winner"></div>
+  <div id="status" class="status">Loading question bank and mini-games…</div>
+</div>
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s);
+  const difficulty = $('#difficulty');
+  const playerCount = $('#playerCount');
+  const winScore = $('#winScore');
+  const nameFields = $('#nameFields');
+  const setupPanel = $('#setupPanel');
+  const gamePanel = $('#gamePanel');
+  const qmeta = $('#qmeta');
+  const qtext = $('#qtext');
+  const answer = $('#answer');
+  const showQuestion = $('#showQuestion');
+  const showAnswer = $('#showAnswer');
+  const nextQuestion = $('#nextQuestion');
+  const playersEl = $('#players');
+  const winnerEl = $('#winner');
+  const status = $('#status');
+  const startGame = $('#startGame');
+  const testMini = $('#testMini');
+
+  let bank = [];
+  let questions = [];
+  let names = [];
+  let scores = [];
+  let reader = 0;
+  let index = 0;
+  let winTarget = 11;
+  let winner = null;
+  let visible = false;
+  let revealed = false;
+  let completed = 0;
+
+  function shuffle(a) {
+    const out = a.slice();
+    for (let i = out.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [out[i], out[j]] = [out[j], out[i]];
+    }
+    return out;
+  }
+
+  function buildNames() {
+    const count = Number(playerCount.value);
+    const defaults = ['Bez', 'Sean', 'Marc'];
+    nameFields.innerHTML = '';
+    for (let i = 0; i < count; i++) {
+      const d = document.createElement('div');
+      d.className = 'field';
+      d.innerHTML = '<label>Player ' + (i + 1) + '</label><input maxlength="24" value="' + (defaults[i] || ('Player ' + (i + 1))) + '">';
+      nameFields.appendChild(d);
+    }
+  }
+
+  function current() { return questions[index] || null; }
+
+  function renderQuestion() {
+    const q = current();
+    qmeta.textContent = names.length ? names[reader] + ' is reading' : 'Ready';
+    qtext.textContent = !q ? 'No question available.' : visible ? q.question : 'Press Show Question when ready.';
+    answer.textContent = q ? q.answer : '';
+    answer.classList.toggle('hidden', !revealed);
+    showAnswer.disabled = !visible || !q || winner !== null;
+    showQuestion.disabled = !q || winner !== null;
+  }
+
+  function render() {
+    playersEl.innerHTML = '';
+    names.forEach((name, i) => {
+      const p = document.createElement('section');
+      p.className = 'player' + (i === reader ? ' reading' : '');
+      p.innerHTML = '<div class="name"></div><div class="score"></div><div class="buttons"></div>';
+      p.querySelector('.name').textContent = name + (i === reader ? ' · Reading' : '');
+      p.querySelector('.score').textContent = scores[i];
+      const buttons = p.querySelector('.buttons');
+      const good = document.createElement('button');
+      good.className = 'correct'; good.textContent = '+1 Correct'; good.disabled = i === reader || winner !== null;
+      good.addEventListener('click', () => score(i, 1));
+      const bad = document.createElement('button');
+      bad.className = 'wrong'; bad.textContent = '-1 Wrong'; bad.disabled = i === reader || winner !== null;
+      bad.addEventListener('click', () => score(i, -1));
+      buttons.append(good, bad); playersEl.appendChild(p);
+    });
+    winnerEl.innerHTML = winner === null ? '' : '<div class="winner">🏆 ' + names[winner] + ' wins with ' + scores[winner] + ' points!</div>';
+    renderQuestion();
+  }
+
+  function advanceReader() {
+    if (!names.length) return;
+    reader = (reader + 1) % names.length;
+    index = (index + 1) % Math.max(questions.length, 1);
+    visible = false;
+    revealed = false;
+  }
+
+  function maybeMini() {
+    if (completed > 0 && completed % 3 === 0 && typeof window.__launchTapMiniGame === 'function') {
+      setTimeout(() => window.__launchTapMiniGame(), 300);
+    }
+  }
+
+  function score(i, delta) {
+    if (winner !== null || i === reader) return;
+    scores[i] += delta;
+    if (delta > 0) {
+      revealed = true;
+      status.textContent = names[i] + ' correct: +1 point.';
+      if (scores[i] >= winTarget) {
+        winner = i;
+      } else {
+        completed++;
+        advanceReader();
+        maybeMini();
+      }
+    } else {
+      status.textContent = names[i] + ' wrong: -1 point. Another player may answer.';
+    }
+    render();
+  }
+
+  function miniPlayers() {
+    return names.map((name, i) => ({ index: i, name, avatar: '', score: scores[i] || 0 }));
+  }
+
+  window.__tapMiniGameAPI = {
+    getPlayers: miniPlayers,
+    addPoints(i, n) { if (scores[i] == null) return; scores[i] += Number(n) || 0; if (scores[i] >= winTarget) winner = i; render(); },
+    setScore(i, n) { if (scores[i] == null) return; scores[i] = Number(n) || 0; if (scores[i] >= winTarget) winner = i; render(); },
+    getLeaderScore() { return scores.length ? Math.max(...scores) : 0; },
+    getLastPlaceIndexes() { if (!scores.length) return []; const low = Math.min(...scores); return scores.map((s, i) => s === low ? i : -1).filter(i => i >= 0); }
+  };
+
+  showQuestion.addEventListener('click', () => { if (!current()) return; visible = true; revealed = false; renderQuestion(); });
+  showAnswer.addEventListener('click', () => { if (!current() || !visible) return; revealed = true; renderQuestion(); });
+  nextQuestion.addEventListener('click', () => { if (!names.length || winner !== null) return; advanceReader(); status.textContent = names[reader] + ' reads next.'; render(); });
+  testMini.addEventListener('click', () => { if (typeof window.__launchTapMiniGame === 'function') window.__launchTapMiniGame(); });
+  playerCount.addEventListener('change', buildNames);
+
+  startGame.addEventListener('click', () => {
+    const level = difficulty.value;
+    questions = shuffle(bank.filter(q => q && q.difficulty === level && !/\batomic\s+number\b/i.test(String(q.question || ''))));
+    if (!questions.length) { status.textContent = 'No questions found for that difficulty.'; return; }
+    names = [...nameFields.querySelectorAll('input')].map((x, i) => x.value.trim() || ('Player ' + (i + 1)));
+    scores = Array(names.length).fill(0);
+    reader = 0; index = 0; winner = null; visible = false; revealed = false; completed = 0;
+    winTarget = Math.max(1, Math.min(99, Number(winScore.value) || 11));
+    setupPanel.classList.add('hidden'); gamePanel.classList.remove('hidden');
+    testMini.disabled = false;
+    status.textContent = questions.length.toLocaleString() + ' ' + level + ' questions ready. Mini-game starts automatically after every 3 completed questions; the orange button launches one immediately for testing.';
+    render();
+  });
+
+  buildNames();
+  fetch('src/data/party-pack.json', { cache: 'no-store' })
+    .then(r => { if (!r.ok) throw new Error('Question bank failed to load.'); return r.json(); })
+    .then(data => { bank = Array.isArray(data) ? data : (Array.isArray(data.questions) ? data.questions : []); status.textContent = bank.length.toLocaleString() + ' questions loaded. Choose settings and start.'; })
+    .catch(err => { status.textContent = String(err.message || err); });
+})();
+</script>
+<script src="public/mini-game-loader.js"></script>
+</body>
+</html>
