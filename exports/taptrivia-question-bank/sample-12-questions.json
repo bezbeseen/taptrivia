@@ -1,0 +1,230 @@
+[
+  {
+    "question": "What 1997 disaster film stars Leonardo DiCaprio and Kate Winslet?",
+    "answer": "Titanic",
+    "difficulty": "easy",
+    "original_difficulty": "easy",
+    "category": "Movies",
+    "this_build_type": "open",
+    "marc_pack_type": "multiple",
+    "written_distractors": [
+      "The Perfect Storm",
+      "Pearl Harbor",
+      "Armageddon"
+    ],
+    "option_a": "The Perfect Storm",
+    "option_b": "Titanic",
+    "option_c": "Pearl Harbor",
+    "option_d": "Armageddon",
+    "correct_letter": "B"
+  },
+  {
+    "question": "In Frozen, what is the name of the snowman who wants to experience summer?",
+    "answer": "Olaf",
+    "difficulty": "easy",
+    "original_difficulty": "easy",
+    "category": "Movies",
+    "this_build_type": "open",
+    "marc_pack_type": "multiple",
+    "written_distractors": [
+      "Sven",
+      "Kristoff",
+      "Marshmallow"
+    ],
+    "option_a": "Olaf",
+    "option_b": "Sven",
+    "option_c": "Kristoff",
+    "option_d": "Marshmallow",
+    "correct_letter": "A"
+  },
+  {
+    "question": "What toy cowboy is voiced by Tom Hanks in the Toy Story films?",
+    "answer": "Woody",
+    "difficulty": "easy",
+    "original_difficulty": "easy",
+    "category": "Movies",
+    "this_build_type": "open",
+    "marc_pack_type": "multiple",
+    "written_distractors": [
+      "Buzz Lightyear",
+      "Jessie",
+      "Mr. Potato Head"
+    ],
+    "option_a": "Woody",
+    "option_b": "Mr. Potato Head",
+    "option_c": "Buzz Lightyear",
+    "option_d": "Jessie",
+    "correct_letter": "A"
+  },
+  {
+    "question": "Which 2019 Marvel film ends a decade of Infinity Saga movies?",
+    "answer": "Avengers: Endgame",
+    "difficulty": "easy",
+    "original_difficulty": "easy",
+    "category": "Movies",
+    "this_build_type": "open",
+    "marc_pack_type": "multiple",
+    "written_distractors": [
+      "Infinity War",
+      "Civil War",
+      "No Way Home"
+    ],
+    "option_a": "Civil War",
+    "option_b": "Infinity War",
+    "option_c": "No Way Home",
+    "option_d": "Avengers: Endgame",
+    "correct_letter": "D"
+  },
+  {
+    "question": "What is the name of the lion cub who becomes king in The Lion King?",
+    "answer": "Simba",
+    "difficulty": "easy",
+    "original_difficulty": "easy",
+    "category": "Movies",
+    "this_build_type": "open",
+    "marc_pack_type": "multiple",
+    "written_distractors": [
+      "Mufasa",
+      "Scar",
+      "Nala"
+    ],
+    "option_a": "Nala",
+    "option_b": "Simba",
+    "option_c": "Scar",
+    "option_d": "Mufasa",
+    "correct_letter": "B"
+  },
+  {
+    "question": "Who played Jack Sparrow in the Pirates of the Caribbean films?",
+    "answer": "Johnny Depp",
+    "difficulty": "easy",
+    "original_difficulty": "easy",
+    "category": "Movies",
+    "this_build_type": "open",
+    "marc_pack_type": "multiple",
+    "written_distractors": [
+      "Orlando Bloom",
+      "Geoffrey Rush",
+      "Javier Bardem"
+    ],
+    "option_a": "Johnny Depp",
+    "option_b": "Geoffrey Rush",
+    "option_c": "Orlando Bloom",
+    "option_d": "Javier Bardem",
+    "correct_letter": "A"
+  },
+  {
+    "question": "In Home Alone, which city does the McCallister family fly to for Christmas?",
+    "answer": "Paris",
+    "difficulty": "easy",
+    "original_difficulty": "easy",
+    "category": "Movies",
+    "this_build_type": "open",
+    "marc_pack_type": "multiple",
+    "written_distractors": [
+      "London",
+      "New York",
+      "Rome"
+    ],
+    "option_a": "Paris",
+    "option_b": "London",
+    "option_c": "New York",
+    "option_d": "Rome",
+    "correct_letter": "A"
+  },
+  {
+    "question": "What color pill does Neo swallow in The Matrix?",
+    "answer": "Red",
+    "difficulty": "easy",
+    "original_difficulty": "easy",
+    "category": "Movies",
+    "this_build_type": "open",
+    "marc_pack_type": "multiple",
+    "written_distractors": [
+      "Blue",
+      "Green",
+      "Yellow"
+    ],
+    "option_a": "Green",
+    "option_b": "Blue",
+    "option_c": "Yellow",
+    "option_d": "Red",
+    "correct_letter": "D"
+  },
+  {
+    "question": "Which Disney film features a young woman who leaves her underwater home for a human prince?",
+    "answer": "The Little Mermaid",
+    "difficulty": "easy",
+    "original_difficulty": "easy",
+    "category": "Movies",
+    "this_build_type": "open",
+    "marc_pack_type": "multiple",
+    "written_distractors": [
+      "Moana",
+      "Pocahontas",
+      "Tangled"
+    ],
+    "option_a": "Moana",
+    "option_b": "The Little Mermaid",
+    "option_c": "Tangled",
+    "option_d": "Pocahontas",
+    "correct_letter": "B"
+  },
+  {
+    "question": "Which 2001 Pixar film is about a clownfish searching for his son?",
+    "answer": "Finding Nemo",
+    "difficulty": "easy",
+    "original_difficulty": "easy",
+    "category": "Movies",
+    "this_build_type": "open",
+    "marc_pack_type": "multiple",
+    "written_distractors": [
+      "Shark Tale",
+      "The Little Mermaid",
+      "Moana"
+    ],
+    "option_a": "Finding Nemo",
+    "option_b": "Moana",
+    "option_c": "The Little Mermaid",
+    "option_d": "Shark Tale",
+    "correct_letter": "A"
+  },
+  {
+    "question": "Which 2008 Pixar film is about a robot left to clean Earth?",
+    "answer": "WALL-E",
+    "difficulty": "easy",
+    "original_difficulty": "easy",
+    "category": "Movies",
+    "this_build_type": "open",
+    "marc_pack_type": "multiple",
+    "written_distractors": [
+      "Robots",
+      "Big Hero 6",
+      "The Iron Giant"
+    ],
+    "option_a": "Robots",
+    "option_b": "Big Hero 6",
+    "option_c": "The Iron Giant",
+    "option_d": "WALL-E",
+    "correct_letter": "D"
+  },
+  {
+    "question": "Which Pixar film is about a retired balloon house that flies to South America?",
+    "answer": "Up",
+    "difficulty": "easy",
+    "original_difficulty": "easy",
+    "category": "Movies",
+    "this_build_type": "open",
+    "marc_pack_type": "multiple",
+    "written_distractors": [
+      "Soul",
+      "Coco",
+      "Inside Out"
+    ],
+    "option_a": "Inside Out",
+    "option_b": "Up",
+    "option_c": "Coco",
+    "option_d": "Soul",
+    "correct_letter": "B"
+  }
+]

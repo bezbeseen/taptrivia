@@ -1,0 +1,25 @@
+Paste this with the attached files when you rebuild Tap Trivia.
+
+Rebuild this party trivia table game from the attached bank.
+
+SOURCE
+- taptrivia-questions.json is the live database (10,115 unique items).
+- Each row is an OPEN spoken question: question, answer, difficulty (easy|medium|hard|smart), category, distractors (up to 3 short wrong answers).
+- There are no true/false items in this bank.
+
+HOW MULTIPLE CHOICE IS DERIVED (do not invent a new scheme)
+Read HOW_MULTIPLE_CHOICE.md and follow it exactly.
+- This-build mode: keep every question OPEN. Hide A–D until the host taps “No one knows”. Then build four choices with: written distractors → same-category answers from the bank → any other answers → fallbacks “Red herring”, “Close, but no”, “Not this one”, “A wild guess”. Shuffle those four.
+- Marc-pack mode: if a row already has 3 distractors, show A–D from the start (type = multiple). If not, leave it open.
+- True/False only when the answer is the words true or false.
+- Never show “No one knows” on true/false or native multiple choice.
+- taptrivia-questions-with-choices.csv already has the filled A–D columns if you want to skip re-deriving.
+
+GAMEPLAY TO KEEP
+- One reader asks out loud; others compete.
+- Correct +1, wrong −1. No escalating miss penalties. No mini-games.
+- Wrong multiple-choice letter: ask who missed it, score −1, leave that letter out. Correct letter: ask who got it, score +1.
+- Reader-rotation: the current reader cannot score. Host mode: anyone can.
+- Win targets by player count: 2→15, 3→11, 4→9, 5→8, 6→7.
+
+Do not invent new questions unless I ask. Do not drop rows that are missing distractors — fill them with the algorithm above.

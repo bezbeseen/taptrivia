@@ -1,0 +1,83 @@
+{
+  "source_rows": 10115,
+  "unique_playable": 10115,
+  "this_build_types": {
+    "open": 10115
+  },
+  "marc_pack_types": {
+    "multiple": 9186,
+    "open": 929
+  },
+  "difficulty_mapped_for_table": {
+    "easy": 2170,
+    "medium": 4365,
+    "hard": 3580
+  },
+  "original_difficulty": {
+    "easy": 2170,
+    "medium": 4365,
+    "hard": 2830,
+    "smart": 750
+  },
+  "categories": [
+    "Animals",
+    "Anime",
+    "Art",
+    "Arts & Literature",
+    "Board Games",
+    "Books",
+    "Cartoons",
+    "Comics",
+    "Computers",
+    "Film & TV",
+    "Food & Drink",
+    "Gadgets",
+    "General Knowledge",
+    "Geography",
+    "History",
+    "Math",
+    "Movies",
+    "Music",
+    "Musicals",
+    "Mythology",
+    "Politics",
+    "Pop Culture",
+    "Science",
+    "Society & Culture",
+    "Sports",
+    "Television",
+    "Vehicles",
+    "Video Games"
+  ],
+  "category_counts": {
+    "Movies": 329,
+    "Television": 226,
+    "Music": 973,
+    "Sports": 550,
+    "Geography": 962,
+    "Food & Drink": 486,
+    "Science": 910,
+    "Animals": 75,
+    "History": 884,
+    "Pop Culture": 106,
+    "Arts & Literature": 640,
+    "Society & Culture": 557,
+    "Computers": 126,
+    "Film & TV": 623,
+    "General Knowledge": 1055,
+    "Gadgets": 30,
+    "Anime": 157,
+    "Video Games": 851,
+    "Books": 100,
+    "Cartoons": 84,
+    "Comics": 68,
+    "Board Games": 55,
+    "Politics": 46,
+    "Mythology": 50,
+    "Art": 41,
+    "Vehicles": 51,
+    "Math": 52,
+    "Musicals": 28
+  },
+  "open_items_that_needed_pool_or_fallback_fill": 929
+}
