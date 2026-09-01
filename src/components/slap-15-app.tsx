@@ -1,6 +1,6 @@
 "use client";
 
-import { useSlapTrivia } from "@/hooks/use-slap-trivia";
+import { useSlapTrivia } from "@/hooks/use-slap-trivia-integrated";
 import { PlayerAvatar } from "@/components/player-avatar";
 import { levelLabel } from "@/lib/questions";
 import { playUiTap } from "@/lib/sounds";
@@ -184,6 +184,7 @@ export function Slap15App() {
               <li>
                 After a correct answer, the next player becomes the reader.
               </li>
+              <li>Every third completed main-game question launches a mini game.</li>
               <li>First player to reach the winning net points wins.</li>
               <li>Questions continue forward even after Reset Game.</li>
             </ul>
@@ -232,9 +233,9 @@ export function Slap15App() {
                   {game.levels.map((item) => (
                     <option key={item.value} value={item.value}>
                       {item.label}
-                    {game.questionCounts[item.value]
-                      ? ` · ${game.questionCounts[item.value].toLocaleString()} questions`
-                      : ""}
+                      {game.questionCounts[item.value]
+                        ? ` · ${game.questionCounts[item.value].toLocaleString()} questions`
+                        : ""}
                     </option>
                   ))}
                 </select>
@@ -463,7 +464,7 @@ export function Slap15App() {
                       onClick={() => game.markWrong(index)}
                     >
                       Wrong
-                      <span className="btn-sub">−{nextPenalty} this miss</span>
+                      <span className="btn-sub">−{nextPenalty}</span>
                     </button>
                   </div>
                 )}
@@ -472,46 +473,27 @@ export function Slap15App() {
           })}
         </div>
 
-        {game.state.winner ? (
-          <div className="winner">
-            {game.names[game.state.winner.index]} wins with{" "}
-            {game.state.scores[game.state.winner.index]} points!
+        {!game.setup ? (
+          <div className="footer-actions">
+            <button
+              type="button"
+              onClick={game.undo}
+              disabled={!game.historyLength}
+            >
+              Undo
+            </button>
+            <button type="button" onClick={game.nextReader}>
+              Next reader
+            </button>
+            <button type="button" onClick={game.resetGame}>
+              Reset game
+            </button>
           </div>
         ) : null}
 
-        <div className="bottom">
-          <button
-            type="button"
-            className="primary next"
-            onClick={game.nextReader}
-            disabled={!!game.state.winner || game.setup}
-          >
-            Next reader
-            {game.nextReaderName ? (
-              <span className="btn-sub">{game.nextReaderName}&apos;s turn</span>
-            ) : null}
-          </button>
-          <button
-            type="button"
-            onClick={game.undo}
-            disabled={game.historyLength === 0}
-          >
-            Undo last
-          </button>
-          <button type="button" onClick={game.resetGame}>
-            Reset game
-          </button>
-        </div>
-
-        <div className="status" aria-live="polite">
-          {game.status}
-        </div>
-        <div className="rules">
-          Correct: +1, then the next player reads. Wrongs escalate per player
-          (−1, −2, −3…). The reader cannot score. If nobody knows, it becomes
-          multiple choice.
-        </div>
+        <div className="status">{game.status}</div>
       </div>
+      <script src="/mini-game-loader.js" async />
     </div>
   );
 }
