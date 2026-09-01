@@ -193,6 +193,14 @@ export function TableScreen({ game }: { game: TapTriviaGame }) {
         <button type="button" onClick={game.resetGame}>
           Reset game
         </button>
+        <button
+          type="button"
+          className="mini-game"
+          onClick={() => void game.launchMiniGame()}
+        >
+          Mini game
+          <span className="btn-sub">Closest · Price · Years · Rapid</span>
+        </button>
       </div>
 
       <div className="status" aria-live="polite">

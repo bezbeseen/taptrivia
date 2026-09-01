@@ -29,6 +29,21 @@
   margin: 0 auto;
 }
 
+.slap15 .sandbox-banner {
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 2px solid var(--ink);
+  background: var(--gold);
+  color: #1b1233;
+  font-family: var(--font-bungee), "Bungee", Impact, sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  box-shadow: var(--shadow);
+}
+
 .slap15 .top {
   display: flex;
   justify-content: space-between;
@@ -507,6 +522,11 @@
 .slap15 button.nobody {
   background: var(--grape) !important;
   color: #fff !important;
+}
+
+.slap15 button.mini-game {
+  background: var(--gold) !important;
+  color: #1b1233 !important;
 }
 
 .slap15 .qbuttons {

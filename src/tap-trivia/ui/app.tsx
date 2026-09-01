@@ -7,6 +7,8 @@ import { SetupScreen } from "@/tap-trivia/ui/setup-screen";
 import { TableScreen } from "@/tap-trivia/ui/table-screen";
 import "@/app/slap15.css";
 
+const SANDBOX_LABEL = "Marc sandbox · Tap Trivia + mini games";
+
 export function TapTriviaApp() {
   const game = useTapTrivia();
 
@@ -20,22 +22,23 @@ export function TapTriviaApp() {
   }
 
   return (
-    <div className="slap15">
-      {!game.setup ? (
-        <Script src="/mini-game-loader.js" strategy="afterInteractive" />
-      ) : null}
-      <div className="wrap">
-        <div className="top">
-          <div>
-            <h1 className="logo">
-              <span className="logo-slap">TAP</span>
-              <span className="logo-trivia">TRIVIA</span>
-            </h1>
-            <div className="sub">{game.subtitle}</div>
+    <>
+      <Script src="/mini-game-loader.js" strategy="afterInteractive" />
+      <div className="slap15">
+        <div className="wrap">
+          <div className="sandbox-banner">{SANDBOX_LABEL}</div>
+          <div className="top">
+            <div>
+              <h1 className="logo">
+                <span className="logo-slap">TAP</span>
+                <span className="logo-trivia">TRIVIA</span>
+              </h1>
+              <div className="sub">{game.subtitle}</div>
+            </div>
           </div>
+          {game.setup ? <SetupScreen game={game} /> : <TableScreen game={game} />}
         </div>
-        {game.setup ? <SetupScreen game={game} /> : <TableScreen game={game} />}
       </div>
-    </div>
+    </>
   );
 }

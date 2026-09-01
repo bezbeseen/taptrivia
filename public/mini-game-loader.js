@@ -2,10 +2,10 @@
   'use strict';
 
   const SOURCES = {
-    closest: 'https://raw.githubusercontent.com/bezbeseen/weddingmarking/22988013d8da0fd0ee2102cbcaf1ddb81a7cf901/tap-trivia/marc-copy/local/closest-wins-plugin.js',
-    price: 'https://raw.githubusercontent.com/bezbeseen/weddingmarking/73c562df5ff6927e0ecd2e4848ff4ecfa8068bf6/tap-trivia/marc-copy/local/price-guess-plugin.js',
-    what: 'https://raw.githubusercontent.com/bezbeseen/weddingmarking/22988013d8da0fd0ee2102cbcaf1ddb81a7cf901/tap-trivia/marc-copy/local/what-came-first-plugin.js',
-    rapid: 'https://raw.githubusercontent.com/bezbeseen/weddingmarking/22988013d8da0fd0ee2102cbcaf1ddb81a7cf901/tap-trivia/marc-copy/local/rapid-fire-plugin.js'
+    closest: '/mini-games/closest-wins-plugin.js',
+    price: '/mini-games/price-guess-plugin.js',
+    what: '/mini-games/what-came-first-plugin.js',
+    rapid: '/mini-games/rapid-fire-plugin.js',
   };
 
   let rotationIndex = 0;
@@ -95,8 +95,9 @@
       loadScript(SOURCES.closest),
       loadScript(SOURCES.price),
       loadPatchedWhatCameFirst(),
-      loadScript(SOURCES.rapid)
+      loadScript(SOURCES.rapid),
     ]).catch((error) => {
+      readyPromise = null;
       console.error(error);
       throw error;
     });
@@ -105,7 +106,7 @@
 
   function launchWhatCameFirstTwoRounds(api) {
     const plugin = window.TapWhatCameFirstPlugin;
-    if (!plugin?.launch) return;
+    if (!plugin?.launch) return false;
     let round = 1;
 
     const startRound = () => {
@@ -136,17 +137,16 @@
     };
 
     startRound();
+    return true;
   }
 
   window.__launchTapMiniGame = async () => {
     const api = window.__tapMiniGameAPI;
-    if (!api?.getPlayers?.().length) return;
-
-    try {
-      await ensureReady();
-    } catch {
-      return;
+    if (!api?.getPlayers?.().length) {
+      throw new Error('Start a game before launching a mini game.');
     }
+
+    await ensureReady();
 
     const slot = rotationIndex++ % 4;
     if (slot === 0 && window.TapClosestWinsPlugin?.launch) {
@@ -157,14 +157,17 @@
       window.TapPriceGuessPlugin.launch(api);
       return;
     }
-    if (slot === 2) {
-      launchWhatCameFirstTwoRounds(api);
+    if (slot === 2 && launchWhatCameFirstTwoRounds(api)) {
       return;
     }
     if (window.TapRapidFirePlugin?.launch) {
       window.TapRapidFirePlugin.launch(api);
+      return;
     }
+    throw new Error('Mini game plugins did not load.');
   };
 
-  ensureReady();
+  ensureReady().catch(() => {
+    /* surfaced when the player launches a mini game */
+  });
 })();

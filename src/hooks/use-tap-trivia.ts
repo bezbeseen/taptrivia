@@ -436,7 +436,9 @@ export function useTapTrivia() {
       setState(next.state);
       completedQuestionsRef.current += 1;
       if (completedQuestionsRef.current % 3 === 0) {
-        window.setTimeout(() => window.__launchTapMiniGame?.(), 250);
+        window.setTimeout(() => {
+          void launchMiniGame();
+        }, 250);
       }
       setStatus(
         mode === "host"
@@ -505,6 +507,17 @@ export function useTapTrivia() {
     );
   };
 
+  const launchMiniGame = async () => {
+    try {
+      await window.__launchTapMiniGame?.();
+      setStatus("Mini game launched. Close it to return to the table.");
+    } catch (error) {
+      setStatus(
+        error instanceof Error ? error.message : "Could not launch a mini game."
+      );
+    }
+  };
+
   const readerName =
     mode === "host" ? hostName.trim() || "Host" : names[playState.reader] ?? "";
   const nextName =
@@ -561,6 +574,7 @@ export function useTapTrivia() {
     nextReader,
     undo,
     resetGame,
+    launchMiniGame,
     canNobodyKnows: currentQuestion
       ? canShowNobodyKnows(currentQuestion.type, playState.nobodyKnows)
       : false,
