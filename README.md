@@ -17,14 +17,16 @@ One player reads (or a host asks). The others compete. Correct is +1. Wrong is â
 
 ```bash
 npm install
-npm run dev
+npm run build
+npm start
 ```
 
 Open [http://127.0.0.1:43127](http://127.0.0.1:43127).
 
+For the merged sandbox preview in Cursor, use the production build (`npm start` or `npm run preview`). `npm run dev` uses the Next dev server, which can block client JavaScript in embedded previews and leave buttons unresponsive.
+
 ```bash
-npm run build
-npm start
+npm run dev
 ```
 
 Marcâ€™s original files are still in the repo root: `index.html`, `question-engine-v2.js`.

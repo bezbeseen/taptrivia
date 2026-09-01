@@ -21,7 +21,9 @@ export function TapTriviaApp() {
 
   return (
     <div className="slap15">
-      <Script src="/mini-game-loader.js" strategy="afterInteractive" />
+      {!game.setup ? (
+        <Script src="/mini-game-loader.js" strategy="afterInteractive" />
+      ) : null}
       <div className="wrap">
         <div className="top">
           <div>

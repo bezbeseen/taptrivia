@@ -7,6 +7,9 @@ import { RULE_COPY, defaultWinScore } from "@/tap-trivia/rules";
 import type { TapDifficulty, TapMode } from "@/tap-trivia/types";
 
 export function SetupScreen({ game }: { game: TapTriviaGame }) {
+  const canStart =
+    Boolean(game.difficulty) && game.dbCount > 0 && !game.importing;
+
   return (
     <section className="question-panel">
       <div className="qmeta">Game setup</div>
@@ -208,10 +211,14 @@ export function SetupScreen({ game }: { game: TapTriviaGame }) {
           type="button"
           className="primary"
           onClick={() => void game.startGame()}
-          disabled={game.loading}
+          disabled={game.loading || !canStart}
         >
           {game.loading ? "Loading questions..." : "Let's play"}
         </button>
+      </div>
+
+      <div className="status" aria-live="polite">
+        {game.status}
       </div>
     </section>
   );
