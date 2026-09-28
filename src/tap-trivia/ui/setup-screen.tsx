@@ -11,7 +11,7 @@ export function SetupScreen({ game }: { game: TapTriviaGame }) {
     Boolean(game.difficulty) && game.dbCount > 0 && !game.importing;
 
   return (
-    <section className="question-panel">
+    <section className="question-panel setup-panel">
       <div className="qmeta">Game setup</div>
       <div className="qtext" style={{ minHeight: 0 }}>
         Four pieces, kept apart: gameplay, rules, the question database, and this screen.

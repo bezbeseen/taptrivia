@@ -24,8 +24,8 @@ export function TapTriviaApp() {
   return (
     <>
       <Script src="/mini-game-loader.js" strategy="afterInteractive" />
-      <div className="slap15">
-        <div className="wrap">
+      <div className={`slap15${game.setup ? " is-setup" : " is-table"}`}>
+        <div className="wrap chalk-frame">
           <div className="sandbox-banner">{SANDBOX_LABEL}</div>
           <div className="top">
             <div>
@@ -33,7 +33,11 @@ export function TapTriviaApp() {
                 <span className="logo-slap">TAP</span>
                 <span className="logo-trivia">TRIVIA</span>
               </h1>
-              <div className="sub">{game.subtitle}</div>
+              {game.setup ? (
+                <div className="sub">{game.subtitle}</div>
+              ) : (
+                <div className="sub table-sub">{game.subtitle}</div>
+              )}
             </div>
           </div>
           {game.setup ? <SetupScreen game={game} /> : <TableScreen game={game} />}
