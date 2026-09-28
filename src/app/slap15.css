@@ -474,11 +474,11 @@
   color: var(--neon-purple);
 }
 
-.slap15 .layer:nth-of-type(2) .layer-kicker {
+.slap15 .layer + .layer .layer-kicker {
   color: var(--neon-green);
 }
 
-.slap15 .layer:nth-of-type(3) .layer-kicker {
+.slap15 .layer + .layer + .layer .layer-kicker {
   color: var(--neon-pink);
 }
 
