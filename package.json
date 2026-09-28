@@ -5,8 +5,9 @@
   "scripts": {
     "dev": "next dev --port 43127",
     "build": "next build",
-    "start": "npx --yes serve out --listen 43127",
+    "start": "next start --port 43127",
     "preview": "npm run build && npx --yes serve out --listen 43151",
+    "export:pages": "GITHUB_PAGES=true next build",
     "lint": "eslint"
   },
   "dependencies": {
